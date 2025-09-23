@@ -1,0 +1,83 @@
+
+.wrapper {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.85rem;
+  padding: 1.05rem 1.25rem;
+  border-radius: 16px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(15, 16, 24, 0.82);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.label {
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.select {
+  min-width: 80px;
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  padding: 0.45rem 1.3rem 0.45rem 0.75rem;
+  font-size: 0.95rem;
+  line-height: 1.1;
+  appearance: none;
+}
+
+.between {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.kindButton {
+  min-height: 44px;
+  padding: 0.45rem 1.05rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.kindButton:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  color: var(--text-primary);
+}
+
+.kindButtonActive {
+  border-color: rgba(45, 183, 255, 0.55);
+  background: rgba(45, 183, 255, 0.16);
+  color: var(--brand-strong);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.actions button {
+  min-width: 96px;
+}

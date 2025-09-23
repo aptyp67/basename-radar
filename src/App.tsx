@@ -1,35 +1,51 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import clsx from "clsx";
+import { NavLink, Outlet, Route, Routes } from "react-router-dom";
+import { HomePage } from "./app/home/HomePage";
+import { MiniPage } from "./app/mini/MiniPage";
+import { DebugPage } from "./app/debug/DebugPage";
+import { ToastContainer } from "./components/ui/ToastContainer";
+import styles from "./App.module.css";
 
-function App() {
-  const [count, setCount] = useState(0)
-
+function Layout() {
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className={styles.shell}>
+      <header className={styles.navbar}>
+        <span className={styles.brand}>Basename Radar</span>
+        <nav className={styles.navLinks}>
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) => clsx(styles.navLink, isActive && styles.navLinkActive)}
+          >
+            Web
+          </NavLink>
+          <NavLink to="/mini" className={({ isActive }) => clsx(styles.navLink, isActive && styles.navLinkActive)}>
+            Mini
+          </NavLink>
+          <NavLink to="/debug" className={({ isActive }) => clsx(styles.navLink, isActive && styles.navLinkActive)}>
+            Debug
+          </NavLink>
+        </nav>
+      </header>
+      <div className={styles.main}>
+        <Outlet />
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+      <footer className={styles.footer}>
+        Mock data only — ready for onchain integration. Built for Base + Farcaster.
+      </footer>
+      <ToastContainer />
+    </div>
+  );
 }
 
-export default App
+export function App() {
+  return (
+    <Routes>
+      <Route element={<Layout />}>
+        <Route index element={<HomePage />} />
+        <Route path="mini" element={<MiniPage />} />
+        <Route path="debug" element={<DebugPage />} />
+      </Route>
+    </Routes>
+  );
+}

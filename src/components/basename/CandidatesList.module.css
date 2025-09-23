@@ -1,0 +1,71 @@
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.5rem;
+  align-content: start;
+}
+
+.emptyState {
+  padding: 1.5rem;
+  border-radius: 16px;
+  border: 1px dashed var(--border-subtle);
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.errorState {
+  padding: 1.5rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 111, 111, 0.35);
+  background: rgba(255, 111, 111, 0.08);
+  text-align: center;
+  color: #ff9a9a;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.skeletonGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.5rem;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.headerRow strong {
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+}
+
+.headerMetric {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.headerMetricValue {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
