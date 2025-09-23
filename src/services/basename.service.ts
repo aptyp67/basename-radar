@@ -6,6 +6,7 @@ import type {
   NameCheckResponse,
   NameKind,
 } from "../types/basename";
+import { publicClient } from "../lib/viem";
 
 interface RegisterIntentResponse {
   ok: true;
@@ -133,6 +134,27 @@ const BASE_PRICE_WEI = {
 };
 
 const nameRegex = /^[a-z0-9-]{3,50}$/;
+const REGISTRAR_CONTROLLER_ADDRESS = "0x4cCb0BB02FCABA27e82a56646E81d8c5bC4119a5";
+const DEFAULT_RENTAL_DURATION = 31_536_000n; // 365 days in seconds
+const registrarControllerAbi = [
+  {
+    type: "function",
+    name: "available",
+    stateMutability: "view",
+    inputs: [{ name: "name", type: "string" }],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    type: "function",
+    name: "rentPrice",
+    stateMutability: "view",
+    inputs: [
+      { name: "name", type: "string" },
+      { name: "duration", type: "uint256" },
+    ],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+] as const;
 
 function deterministicHash(input: string): number {
   let hash = 0;
@@ -305,17 +327,45 @@ class BasenameService {
     if (!nameRegex.test(name)) {
       return { availability: "unknown" };
     }
-    const normalized = name.toLowerCase();
-    const hash = deterministicHash(normalized);
-    const availability = availabilityFromHash(hash);
-    const priceWei = priceForLength(normalized.length, hash);
 
-    return new Promise((resolve) => {
-      globalThis.setTimeout(
-        () => resolve({ availability, priceWei }),
-        80 + (hash % 120)
-      );
-    });
+    const normalized = name.toLowerCase();
+    if (
+      normalized.includes("--") ||
+      normalized.startsWith("-") ||
+      normalized.endsWith("-")
+    ) {
+      return { availability: "unknown" };
+    }
+
+    try {
+      const isAvailable = await publicClient.readContract({
+        address: REGISTRAR_CONTROLLER_ADDRESS,
+        abi: registrarControllerAbi,
+        functionName: "available",
+        args: [normalized],
+      });
+
+      const availability: Availability = isAvailable ? "available" : "taken";
+      let priceWei: string | undefined;
+      if (isAvailable) {
+        try {
+          const price = await publicClient.readContract({
+            address: REGISTRAR_CONTROLLER_ADDRESS,
+            abi: registrarControllerAbi,
+            functionName: "rentPrice",
+            args: [normalized, DEFAULT_RENTAL_DURATION],
+          });
+          priceWei = price.toString();
+        } catch (priceError) {
+          console.error("Failed to fetch rent price", priceError);
+        }
+      }
+
+      return { availability, priceWei };
+    } catch (error) {
+      console.error("Failed to check name availability", error);
+      return { availability: "unknown" };
+    }
   }
 
   async watchName(name: string): Promise<WatchResponse> {

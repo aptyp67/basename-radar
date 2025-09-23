@@ -33,7 +33,7 @@ export function NameSearch({ autoFocus }: NameSearchProps) {
           onChange={(event) => setValue(event.target.value)}
           minLength={3}
           maxLength={50}
-          pattern="[a-z0-9-]{3,50}"
+          pattern="[a-z0-9\-]{3,50}"
           title="3-50 chars, lowercase letters, numbers, single dash"
         />
         <Button type="submit" size="lg" className={styles.submit} disabled={status === "loading"}>
