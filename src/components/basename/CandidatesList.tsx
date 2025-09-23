@@ -11,9 +11,10 @@ interface CandidatesListProps {
   isLoading: boolean;
   error: string | null;
   onRetry: () => void;
+  totalCount?: number;
 }
 
-export function CandidatesList({ items, isLoading, error, onRetry }: CandidatesListProps) {
+export function CandidatesList({ items, isLoading, error, onRetry, totalCount }: CandidatesListProps) {
   const setDebugSnapshot = useUIStore((state) => state.setDebugSnapshot);
   const averageScore = useMemo(() => {
     if (items.length === 0) {
@@ -55,7 +56,7 @@ export function CandidatesList({ items, isLoading, error, onRetry }: CandidatesL
   return (
     <div className={styles.wrapper}>
       <div className={styles.headerRow}>
-        <strong>{items.length} Candidates</strong>
+        <strong>{totalCount ?? items.length} Candidates</strong>
         <span className={styles.headerMetric}>
           <span>Avg. Score</span>
           <span className={styles.headerMetricValue}>{averageScore}</span>
