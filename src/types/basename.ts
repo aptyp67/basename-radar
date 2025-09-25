@@ -1,4 +1,4 @@
-export type NameKind = "short" | "word" | "pattern";
+export type NameKind = "word" | "palindrome";
 export type Availability = "available" | "taken" | "unknown";
 
 export interface BasenameCandidate {
@@ -12,9 +12,11 @@ export interface BasenameCandidate {
 }
 
 export interface CandidateFilters {
-  lengthRange: [number, number];
+  lengths: number[];
+  anyLength: boolean;
   kinds: NameKind[];
-  sort: "score" | "price" | "alpha";
+  sort: "score" | "alpha";
+  sortDirection: "asc" | "desc";
 }
 
 export interface CandidatesResponse {

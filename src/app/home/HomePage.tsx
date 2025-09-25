@@ -11,15 +11,17 @@ const ITEMS_PER_PAGE = 9;
 const LIST_SCROLL_OFFSET_PX = 24;
 
 export function HomePage() {
-  const lengthRange = useFiltersStore((state) => state.lengthRange);
+  const lengths = useFiltersStore((state) => state.lengths);
+  const anyLength = useFiltersStore((state) => state.anyLength);
   const kinds = useFiltersStore((state) => state.kinds);
   const sort = useFiltersStore((state) => state.sort);
+  const sortDirection = useFiltersStore((state) => state.sortDirection);
   const [page, setPage] = useState(1);
   const listContainerRef = useRef<HTMLDivElement>(null);
 
   const filters = useMemo(
-    () => ({ lengthRange, kinds, sort }),
-    [lengthRange, kinds, sort]
+    () => ({ lengths, anyLength, kinds, sort, sortDirection }),
+    [lengths, anyLength, kinds, sort, sortDirection]
   );
 
   const {
@@ -51,7 +53,7 @@ export function HomePage() {
 
   useEffect(() => {
     setPage(1);
-  }, [lengthRange, kinds, sort]);
+  }, [lengths, anyLength, kinds, sort, sortDirection]);
 
   useEffect(() => {
     const pages = Math.ceil(candidates.length / ITEMS_PER_PAGE);

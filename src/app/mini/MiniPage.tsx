@@ -7,13 +7,15 @@ import { useCandidates } from "../../hooks/useCandidates";
 import styles from "./MiniPage.module.css";
 
 export function MiniPage() {
-  const lengthRange = useFiltersStore((state) => state.lengthRange);
+  const lengths = useFiltersStore((state) => state.lengths);
+  const anyLength = useFiltersStore((state) => state.anyLength);
   const kinds = useFiltersStore((state) => state.kinds);
   const sort = useFiltersStore((state) => state.sort);
+  const sortDirection = useFiltersStore((state) => state.sortDirection);
 
   const filters = useMemo(
-    () => ({ lengthRange, kinds, sort }),
-    [lengthRange, kinds, sort]
+    () => ({ lengths, anyLength, kinds, sort, sortDirection }),
+    [lengths, anyLength, kinds, sort, sortDirection]
   );
 
   const { items, isLoading, error, refresh } = useCandidates(filters, 18);

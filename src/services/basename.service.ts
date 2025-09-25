@@ -87,18 +87,11 @@ function availabilityFromHash(hash: number): Availability {
 
 function detectKinds(name: string): NameKind[] {
   const kinds = new Set<NameKind>();
-  if (name.length <= 4) {
-    kinds.add("short");
-  }
-  if (isPattern(name)) {
-    kinds.add("pattern");
-  }
   kinds.add("word");
+  if (isPalindrome(name)) {
+    kinds.add("palindrome");
+  }
   return Array.from(kinds);
-}
-
-function isPattern(value: string): boolean {
-  return isPalindrome(value) || hasRepeatingPattern(value) || isAlternating(value);
 }
 
 function isPalindrome(value: string): boolean {
@@ -138,11 +131,6 @@ function buildReasons(name: string, kinds: NameKind[]): string[] {
   if (isAlternating(name)) {
     reasons.add("alternating pattern");
   }
-  kinds.forEach((kind) => {
-    if (kind === "pattern") {
-      reasons.add("pattern");
-    }
-  });
   return Array.from(reasons);
 }
 
@@ -156,7 +144,7 @@ function computeScore(name: string, kinds: NameKind[]): number {
   if (kinds.includes("word")) {
     score += 30;
   }
-  if (kinds.includes("pattern")) {
+  if (kinds.includes("palindrome")) {
     score += 15;
   }
   if (/\d{3,}/.test(name)) {
@@ -198,20 +186,22 @@ class BasenameService {
 
   sortCandidates(
     items: BasenameCandidate[],
-    sort: CandidateFilters["sort"]
+    sort: CandidateFilters["sort"],
+    direction: CandidateFilters["sortDirection"]
   ): BasenameCandidate[] {
-    return [...items].sort((a, b) => this.sortComparer(a, b, sort));
+    return [...items].sort((a, b) => this.sortComparer(a, b, sort, direction));
   }
 
   async getCandidates(
     filters: CandidateFilters,
     limit = 40
   ): Promise<CandidatesResponse> {
-    const [minLen, maxLen] = filters.lengthRange;
+    const allowedLengths = new Set(filters.lengths);
+    const shouldFilterByLength = !filters.anyLength && allowedLengths.size > 0;
     const allowedKinds = new Set(filters.kinds);
     const { items: allItems } = await this.getAllCandidates();
     const filtered = allItems.filter((item) => {
-      if (item.length < minLen || item.length > maxLen) {
+      if (shouldFilterByLength && !allowedLengths.has(item.length)) {
         return false;
       }
       if (allowedKinds.size > 0) {
@@ -220,7 +210,7 @@ class BasenameService {
       return true;
     });
 
-    const sorted = this.sortCandidates(filtered, filters.sort);
+    const sorted = this.sortCandidates(filtered, filters.sort, filters.sortDirection);
     return { items: limit ? sorted.slice(0, limit) : sorted, nextCursor: undefined };
   }
 
@@ -295,25 +285,15 @@ class BasenameService {
   private sortComparer(
     a: BasenameCandidate,
     b: BasenameCandidate,
-    sort: CandidateFilters["sort"]
+    sort: CandidateFilters["sort"],
+    direction: CandidateFilters["sortDirection"]
   ): number {
+    const isAscending = direction === "asc";
     if (sort === "alpha") {
-      return a.name.localeCompare(b.name);
+      return isAscending ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
     }
 
-    if (sort === "score") {
-      return b.score - a.score;
-    }
-
-    const aPrice = a.priceWei ? BigInt(a.priceWei) : BigInt(0);
-    const bPrice = b.priceWei ? BigInt(b.priceWei) : BigInt(0);
-    if (aPrice === BigInt(0)) {
-      return 1;
-    }
-    if (bPrice === BigInt(0)) {
-      return -1;
-    }
-    return Number(aPrice - bPrice);
+    return isAscending ? a.score - b.score : b.score - a.score;
   }
 }
 

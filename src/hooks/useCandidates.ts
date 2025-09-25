@@ -20,9 +20,10 @@ export function useCandidates(
   const [shuffleToken, setShuffleToken] = useState(() => Date.now());
   const [orderMode, setOrderMode] = useState<"random" | "sorted">("random");
   const setApiLatency = useUIStore((state) => state.setApiLatency);
-  const { lengthRange, kinds, sort } = filters;
+  const { lengths, anyLength, kinds, sort, sortDirection } = filters;
   const previousSortRef = useRef(sort);
-  const previousFiltersRef = useRef({ lengthRange, kinds });
+  const previousSortDirectionRef = useRef(sortDirection);
+  const previousFiltersRef = useRef({ lengths, anyLength, kinds });
 
   useEffect(() => {
     let cancelled = false;
@@ -57,31 +58,37 @@ export function useCandidates(
   }, [setApiLatency]);
 
   useEffect(() => {
-    if (previousSortRef.current !== sort) {
+    const sortChanged = previousSortRef.current !== sort;
+    const directionChanged = previousSortDirectionRef.current !== sortDirection;
+    if (sortChanged || directionChanged) {
       previousSortRef.current = sort;
+      previousSortDirectionRef.current = sortDirection;
       setOrderMode("sorted");
     }
-  }, [sort]);
+  }, [sort, sortDirection]);
 
   useEffect(() => {
     const prev = previousFiltersRef.current;
     const lengthChanged =
-      prev.lengthRange[0] !== lengthRange[0] || prev.lengthRange[1] !== lengthRange[1];
+      prev.anyLength !== anyLength ||
+      prev.lengths.length !== lengths.length ||
+      prev.lengths.some((value, index) => value !== lengths[index]);
     const kindsChanged = prev.kinds !== kinds;
-    previousFiltersRef.current = { lengthRange, kinds };
+    previousFiltersRef.current = { lengths, anyLength, kinds };
     if (orderMode === "random" && (lengthChanged || kindsChanged)) {
       setShuffleToken(Date.now());
     }
-  }, [lengthRange, kinds, orderMode]);
+  }, [lengths, anyLength, kinds, orderMode]);
 
   const filteredItems = useMemo(() => {
     if (allItems.length === 0) {
       return [];
     }
-    const [minLen, maxLen] = lengthRange;
     const allowedKinds = new Set(kinds);
+    const allowedLengths = new Set(lengths);
+    const shouldFilterByLength = !anyLength && allowedLengths.size > 0;
     return allItems.filter((item) => {
-      if (item.length < minLen || item.length > maxLen) {
+      if (shouldFilterByLength && !allowedLengths.has(item.length)) {
         return false;
       }
       if (allowedKinds.size > 0) {
@@ -89,7 +96,7 @@ export function useCandidates(
       }
       return true;
     });
-  }, [allItems, lengthRange, kinds]);
+  }, [allItems, lengths, anyLength, kinds]);
 
   const orderedItems = useMemo(() => {
     if (filteredItems.length === 0) {
@@ -98,8 +105,8 @@ export function useCandidates(
     if (orderMode === "random") {
       return shuffleWithSeed(filteredItems, shuffleToken);
     }
-    return basenameService.sortCandidates(filteredItems, sort);
-  }, [filteredItems, orderMode, shuffleToken, sort]);
+    return basenameService.sortCandidates(filteredItems, sort, sortDirection);
+  }, [filteredItems, orderMode, shuffleToken, sort, sortDirection]);
 
   const limitedItems = useMemo(() => {
     if (!limit || limit >= orderedItems.length) {

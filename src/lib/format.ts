@@ -32,14 +32,11 @@ export function availabilityCopy(availability: string | null | undefined): strin
 export function formatKinds(kinds: string[]): string {
   return kinds
     .map((kind) => {
-      if (kind === "short") {
-        return "Short";
-      }
       if (kind === "word") {
         return "Word";
       }
-      if (kind === "pattern") {
-        return "Pattern";
+      if (kind === "palindrome") {
+        return "Palindrome";
       }
       return kind;
     })

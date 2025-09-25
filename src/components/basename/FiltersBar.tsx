@@ -1,17 +1,19 @@
 import clsx from "clsx";
 import { useMemo } from "react";
-import type { ChangeEvent } from "react";
 import { Button } from "../ui/Button";
 import styles from "./FiltersBar.module.css";
-import { useFiltersStore, DEFAULT_KINDS } from "../../store/filters.store";
+import { useFiltersStore, DEFAULT_KINDS, LENGTH_OPTIONS } from "../../store/filters.store";
 import type { NameKind } from "../../types/basename";
 import { useUIStore } from "../../store/ui.store";
 
-const LENGTH_OPTIONS = [3, 4, 5, 6];
 const KIND_LABELS: Record<NameKind, string> = {
-  short: "Short",
-  word: "Words",
-  pattern: "Patterns",
+  palindrome: "Palindrome",
+  word: "Any word",
+};
+
+const SORT_LABELS: Record<"score" | "alpha", string> = {
+  score: "Score",
+  alpha: "Alphabetical",
 };
 
 interface FiltersBarProps {
@@ -19,26 +21,48 @@ interface FiltersBarProps {
 }
 
 export function FiltersBar({ onShuffle }: FiltersBarProps) {
-  const { lengthRange, kinds, sort, setLengthRange, toggleKind, setSort, reset } = useFiltersStore();
+  const {
+    lengths,
+    anyLength,
+    kinds,
+    sort,
+    sortDirection,
+    toggleLength,
+    setAnyLength,
+    toggleKind,
+    setSort,
+    toggleSortDirection,
+    reset,
+  } = useFiltersStore();
   const trackEvent = useUIStore((state) => state.trackEvent);
+  const lengthSet = useMemo(() => new Set(lengths), [lengths]);
   const kindSet = useMemo(() => new Set(kinds), [kinds]);
 
-  const handleLength = (minOrMax: "min" | "max") => (event: ChangeEvent<HTMLSelectElement>) => {
-    const value = Number(event.target.value);
-    const [currentMin, currentMax] = lengthRange;
-    const nextRange: [number, number] =
-      minOrMax === "min" ? [value, Math.max(value, currentMax)] : [Math.min(currentMin, value), value];
-    setLengthRange(nextRange);
-    trackEvent("filterChanges");
-  };
-
-  const handleSort = (event: ChangeEvent<HTMLSelectElement>) => {
-    setSort(event.target.value as typeof sort);
-    trackEvent("filterChanges");
-  };
-
-  const handleToggleKind = (kind: NameKind) => {
+  const handleSelectKind = (kind: NameKind) => {
     toggleKind(kind);
+    trackEvent("filterChanges");
+  };
+
+  const handleToggleLength = (length: number) => {
+    toggleLength(length);
+    trackEvent("filterChanges");
+  };
+
+  const handleToggleAnyLength = () => {
+    setAnyLength(!anyLength);
+    trackEvent("filterChanges");
+  };
+
+  const handleSelectSort = (nextSort: "score" | "alpha") => {
+    if (sort === nextSort) {
+      return;
+    }
+    setSort(nextSort);
+    trackEvent("filterChanges");
+  };
+
+  const handleToggleDirection = () => {
+    toggleSortDirection();
     trackEvent("filterChanges");
   };
 
@@ -50,53 +74,51 @@ export function FiltersBar({ onShuffle }: FiltersBarProps) {
     trackEvent("shuffleClicks");
   };
 
+  const directionIcon = sortDirection === "asc" ? "↑" : "↓";
+  const directionLabel = sortDirection === "asc" ? "Ascending" : "Descending";
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.group}>
         <span className={styles.label}>Length</span>
-        <div className={styles.controls}>
-          <select className={styles.select} value={lengthRange[0]} onChange={handleLength("min")}>
-            {LENGTH_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-          <span className={styles.between}>to</span>
-          <select className={styles.select} value={lengthRange[1]} onChange={handleLength("max")}>
-            {LENGTH_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+        <div className={clsx(styles.controls, styles.controlsInline)}>
+          {LENGTH_OPTIONS.map((option) => (
+            <button
+              key={option}
+              type="button"
+              className={clsx(
+                styles.toggleButton,
+                !anyLength && lengthSet.has(option) && styles.toggleButtonActive
+              )}
+              onClick={() => handleToggleLength(option)}
+            >
+              {option}
+            </button>
+          ))}
+          <button
+            type="button"
+            className={clsx(styles.toggleButton, anyLength && styles.toggleButtonActive)}
+            onClick={handleToggleAnyLength}
+          >
+            Any length
+          </button>
         </div>
       </div>
 
       <div className={styles.group}>
         <span className={styles.label}>Kind</span>
-        <div className={styles.controls}>
+        <div className={clsx(styles.controls, styles.controlsInline)}>
           {DEFAULT_KINDS.map((kind) => (
             <button
               key={kind}
               type="button"
               className={clsx(
-                styles.kindButton,
-                kind !== "pattern" && kindSet.has(kind) && styles.kindButtonActive,
-                kind === "pattern" && styles.kindButtonDisabled
+                styles.toggleButton,
+                kindSet.has(kind) && styles.toggleButtonActive
               )}
-              onClick={() => {
-                if (kind === "pattern") {
-                  return;
-                }
-                handleToggleKind(kind);
-              }}
-              disabled={kind === "pattern"}
+              onClick={() => handleSelectKind(kind)}
             >
               <span>{KIND_LABELS[kind]}</span>
-              {kind === "pattern" && (
-                <span className={styles.kindButtonNote}>in development</span>
-              )}
             </button>
           ))}
         </div>
@@ -104,22 +126,38 @@ export function FiltersBar({ onShuffle }: FiltersBarProps) {
 
       <div className={styles.group}>
         <span className={styles.label}>Sort</span>
-        <div className={styles.controls}>
-          <select className={styles.select} value={sort} onChange={handleSort}>
-            <option value="score">Score</option>
-            <option value="price">Price</option>
-            <option value="alpha">Alphabetical</option>
-          </select>
+        <div className={clsx(styles.controls, styles.controlsInline)}>
+          <button
+            type="button"
+            aria-label={`Toggle sort direction: ${directionLabel}`}
+            className={clsx(styles.toggleButton, styles.toggleIconButton)}
+            onClick={handleToggleDirection}
+          >
+            {directionIcon}
+          </button>
+          {Object.entries(SORT_LABELS).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              className={clsx(
+                styles.toggleButton,
+                sort === value && styles.toggleButtonActive
+              )}
+              onClick={() => handleSelectSort(value as "score" | "alpha")}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
       <div className={styles.actions}>
         <Button type="button" variant="secondary" size="md" onClick={handleShuffle} disabled={!onShuffle}>
-          Shuffle
+          🤖 Generate
         </Button>
         <Button
           type="button"
-          variant="ghost"
+          variant="secondary"
           size="md"
           onClick={() => {
             reset();
