@@ -6,7 +6,7 @@ import type {
   NameCheckResponse,
   NameKind,
 } from "../types/basename";
-import { publicClient } from "../lib/viem";
+import { withBaseRpcFallback } from "../lib/viem";
 
 interface RegisterIntentResponse {
   ok: true;
@@ -338,23 +338,27 @@ class BasenameService {
     }
 
     try {
-      const isAvailable = await publicClient.readContract({
-        address: REGISTRAR_CONTROLLER_ADDRESS,
-        abi: registrarControllerAbi,
-        functionName: "available",
-        args: [normalized],
-      });
+      const isAvailable = await withBaseRpcFallback((client) =>
+        client.readContract({
+          address: REGISTRAR_CONTROLLER_ADDRESS,
+          abi: registrarControllerAbi,
+          functionName: "available",
+          args: [normalized],
+        })
+      );
 
       const availability: Availability = isAvailable ? "available" : "taken";
       let priceWei: string | undefined;
       if (isAvailable) {
         try {
-          const price = await publicClient.readContract({
-            address: REGISTRAR_CONTROLLER_ADDRESS,
-            abi: registrarControllerAbi,
-            functionName: "rentPrice",
-            args: [normalized, DEFAULT_RENTAL_DURATION],
-          });
+          const price = await withBaseRpcFallback((client) =>
+            client.readContract({
+              address: REGISTRAR_CONTROLLER_ADDRESS,
+              abi: registrarControllerAbi,
+              functionName: "rentPrice",
+              args: [normalized, DEFAULT_RENTAL_DURATION],
+            })
+          );
           priceWei = price.toString();
         } catch (priceError) {
           console.error("Failed to fetch rent price", priceError);

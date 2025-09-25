@@ -4,6 +4,7 @@ import type { BasenameCandidate } from "../../types/basename";
 import { formatKinds, formatReason, formatWei, availabilityCopy } from "../../lib/format";
 import { RegisterButton } from "./RegisterButton";
 import { WatchButton } from "./WatchButton";
+import { useNameAvailability } from "../../hooks/useNameAvailability";
 
 interface NameCardProps {
   candidate: BasenameCandidate;
@@ -16,10 +17,20 @@ const AVAILABILITY_TONE = {
 };
 
 export function NameCard({ candidate }: NameCardProps) {
+  const { availability, priceWei, isChecking } = useNameAvailability(
+    candidate.name,
+    candidate.availability,
+    candidate.priceWei
+  );
+  const tone = isChecking ? "muted" : AVAILABILITY_TONE[availability];
+  const statusLabel = isChecking ? "Checking…" : availabilityCopy(availability);
   return (
     <article className={styles.card}>
-      <Badge tone={AVAILABILITY_TONE[candidate.availability]} className={styles.statusBadge}>
-        {availabilityCopy(candidate.availability)}
+      <Badge tone={tone} className={styles.statusBadge}>
+        <span className={styles.statusContent}>
+          {isChecking && <span className={styles.statusSpinner} aria-hidden="true" />}
+          {statusLabel}
+        </span>
       </Badge>
       <header className={styles.header}>
         <h3 className={styles.name}>{candidate.name}</h3>
@@ -42,7 +53,7 @@ export function NameCard({ candidate }: NameCardProps) {
           </div>
           <div className={styles.metric}>
             <span className={styles.metricLabel}>Price</span>
-            <span className={styles.metricValue}>{formatWei(candidate.priceWei)}</span>
+            <span className={styles.metricValue}>{formatWei(priceWei)}</span>
           </div>
         </div>
       </div>
@@ -51,7 +62,7 @@ export function NameCard({ candidate }: NameCardProps) {
         <div className={styles.actions}>
           <RegisterButton
             name={candidate.name}
-            disabled={candidate.availability === "taken"}
+            disabled={availability === "taken" || isChecking}
             fullWidth
           />
           <WatchButton name={candidate.name} fullWidth />

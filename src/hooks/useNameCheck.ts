@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { basenameService } from "../services/basename.service";
-import type { Availability, NameCheckResponse } from "../types/basename";
+import type { Availability } from "../types/basename";
+import { getNameCheckCache, setNameCheckCache } from "../lib/nameCheckCache";
 
 interface CheckState {
   status: "idle" | "loading" | "success" | "error";
@@ -10,7 +11,6 @@ interface CheckState {
   lastName?: string;
 }
 
-const cache = new Map<string, NameCheckResponse>();
 const NAME_REGEX = /^[a-z0-9-]{3,50}$/;
 
 export function useNameCheck() {
@@ -28,7 +28,7 @@ export function useNameCheck() {
       return;
     }
 
-    const cached = cache.get(trimmed);
+    const cached = getNameCheckCache(trimmed);
     if (cached) {
       setState({
         status: "success",
@@ -44,7 +44,7 @@ export function useNameCheck() {
     setState({ status: "loading", availability: null });
     try {
       const response = await basenameService.checkName(trimmed);
-      cache.set(trimmed, response);
+      setNameCheckCache(trimmed, response);
       if (lastRequest.current === requestId) {
         setState({
           status: "success",
