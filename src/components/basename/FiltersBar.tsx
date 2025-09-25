@@ -14,7 +14,11 @@ const KIND_LABELS: Record<NameKind, string> = {
   pattern: "Patterns",
 };
 
-export function FiltersBar() {
+interface FiltersBarProps {
+  onShuffle?: () => void;
+}
+
+export function FiltersBar({ onShuffle }: FiltersBarProps) {
   const { lengthRange, kinds, sort, setLengthRange, toggleKind, setSort, reset } = useFiltersStore();
   const trackEvent = useUIStore((state) => state.trackEvent);
   const kindSet = useMemo(() => new Set(kinds), [kinds]);
@@ -36,6 +40,14 @@ export function FiltersBar() {
   const handleToggleKind = (kind: NameKind) => {
     toggleKind(kind);
     trackEvent("filterChanges");
+  };
+
+  const handleShuffle = () => {
+    if (!onShuffle) {
+      return;
+    }
+    onShuffle();
+    trackEvent("shuffleClicks");
   };
 
   return (
@@ -68,10 +80,23 @@ export function FiltersBar() {
             <button
               key={kind}
               type="button"
-              className={clsx(styles.kindButton, kindSet.has(kind) && styles.kindButtonActive)}
-              onClick={() => handleToggleKind(kind)}
+              className={clsx(
+                styles.kindButton,
+                kind !== "pattern" && kindSet.has(kind) && styles.kindButtonActive,
+                kind === "pattern" && styles.kindButtonDisabled
+              )}
+              onClick={() => {
+                if (kind === "pattern") {
+                  return;
+                }
+                handleToggleKind(kind);
+              }}
+              disabled={kind === "pattern"}
             >
-              {KIND_LABELS[kind]}
+              <span>{KIND_LABELS[kind]}</span>
+              {kind === "pattern" && (
+                <span className={styles.kindButtonNote}>in development</span>
+              )}
             </button>
           ))}
         </div>
@@ -89,6 +114,9 @@ export function FiltersBar() {
       </div>
 
       <div className={styles.actions}>
+        <Button type="button" variant="secondary" size="md" onClick={handleShuffle} disabled={!onShuffle}>
+          Shuffle
+        </Button>
         <Button
           type="button"
           variant="ghost"

@@ -7,6 +7,7 @@ import type {
   NameKind,
 } from "../types/basename";
 import { withBaseRpcFallback } from "../lib/viem";
+import { words as rawWords } from "../assets/words";
 
 interface RegisterIntentResponse {
   ok: true;
@@ -17,121 +18,20 @@ interface WatchResponse {
   ok: true;
 }
 
-const SHORT_NAMES = [
-  "zen",
-  "x0x",
-  "loop",
-  "nova",
-  "byte",
-  "flux",
-  "beam",
-  "echo",
-  "void",
-  "axis",
-  "opal",
-  "muse",
-  "luna",
-  "aero",
-  "wave",
-  "ember",
-  "aqua",
-  "delta",
-  "zeal",
-  "sync",
-  "nexa",
-  "fyre",
-  "iris",
-  "atom",
-  "seed",
-  "myth",
-  "spark",
-  "cyra",
-  "rift",
-  "prsm",
-];
-
-const WORD_NAMES = [
-  "orbit",
-  "atlas",
-  "aurora",
-  "stellar",
-  "horizon",
-  "nebula",
-  "pulse",
-  "cipher",
-  "mirage",
-  "halo",
-  "summit",
-  "echoes",
-  "harbor",
-  "compass",
-  "ember",
-  "cascade",
-  "glimmer",
-  "lattice",
-  "momentum",
-  "quasar",
-  "solace",
-  "vertex",
-  "voyage",
-  "wander",
-  "zenith",
-  "zephyr",
-  "kinetic",
-  "monsoon",
-  "nocturne",
-  "silhouette",
-  "tangent",
-  "haven",
-  "panorama",
-  "parallax",
-  "serenity",
-  "sonata",
-  "strata",
-  "traverse",
-  "velvet",
-  "whisper",
-];
-
-const PATTERN_NAMES = [
-  "radar",
-  "level",
-  "solos",
-  "1221",
-  "9009",
-  "808",
-  "alpha",
-  "orbit",
-  "fluxx",
-  "pixel",
-  "harm",
-  "m33m",
-  "cyc",
-  "kale",
-  "pulse",
-  "ababa",
-  "z1z1",
-  "a11a",
-  "n0n0",
-  "wave",
-  "a2a2",
-  "loop",
-  "saga",
-  "neon",
-  "n1n1",
-  "xoxo",
-  "axa",
-  "pop",
-  "civic",
-  "reviver",
-];
-
 const BASE_PRICE_WEI = {
   3: BigInt("300000000000000000"),
   4: BigInt("180000000000000000"),
   5: BigInt("90000000000000000"),
   6: BigInt("50000000000000000"),
 };
+
+const UNIQUE_WORDS = Array.from(
+  new Set(
+    rawWords
+      .map((word) => word.trim().toLowerCase())
+      .filter((word) => word.length > 0)
+  )
+);
 
 const nameRegex = /^[a-z0-9-]{3,50}$/;
 const REGISTRAR_CONTROLLER_ADDRESS = "0x4cCb0BB02FCABA27e82a56646E81d8c5bC4119a5";
@@ -186,18 +86,15 @@ function availabilityFromHash(hash: number): Availability {
 }
 
 function detectKinds(name: string): NameKind[] {
-  const kinds: NameKind[] = [];
+  const kinds = new Set<NameKind>();
   if (name.length <= 4) {
-    kinds.push("short");
-  }
-  const isWord = WORD_NAMES.includes(name) || SHORT_NAMES.includes(name);
-  if (isWord) {
-    kinds.push("word");
+    kinds.add("short");
   }
   if (isPattern(name)) {
-    kinds.push("pattern");
+    kinds.add("pattern");
   }
-  return kinds.length > 0 ? kinds : ["word"];
+  kinds.add("word");
+  return Array.from(kinds);
 }
 
 function isPattern(value: string): boolean {
@@ -223,7 +120,7 @@ function isAlternating(value: string): boolean {
     return false;
   }
   const pattern = value.slice(0, 2);
-  return value.split(pattern).join("" ) === "";
+  return value.split(pattern).join("") === "";
 }
 
 function buildReasons(name: string, kinds: NameKind[]): string[] {
@@ -231,9 +128,7 @@ function buildReasons(name: string, kinds: NameKind[]): string[] {
   if (name.length <= 4) {
     reasons.add(`short-${name.length}`);
   }
-  if (WORD_NAMES.includes(name)) {
-    reasons.add("real word");
-  }
+  reasons.add("real word");
   if (isPalindrome(name)) {
     reasons.add("palindrome");
   }
@@ -246,9 +141,6 @@ function buildReasons(name: string, kinds: NameKind[]): string[] {
   kinds.forEach((kind) => {
     if (kind === "pattern") {
       reasons.add("pattern");
-    }
-    if (kind === "word") {
-      reasons.add("word-like");
     }
   });
   return Array.from(reasons);
@@ -276,9 +168,7 @@ function computeScore(name: string, kinds: NameKind[]): number {
   return Math.max(score, 0);
 }
 
-const MOCK_DATA: BasenameCandidate[] = Array.from(
-  new Set([...SHORT_NAMES, ...WORD_NAMES, ...PATTERN_NAMES])
-).map((name) => {
+const MOCK_DATA: BasenameCandidate[] = UNIQUE_WORDS.map((name) => {
   const normalized = name.toLowerCase();
   const length = normalized.length;
   const kinds = detectKinds(normalized);
@@ -297,13 +187,30 @@ const MOCK_DATA: BasenameCandidate[] = Array.from(
 });
 
 class BasenameService {
+  async getAllCandidates(): Promise<CandidatesResponse> {
+    return new Promise((resolve) => {
+      globalThis.setTimeout(
+        () => resolve({ items: [...MOCK_DATA], nextCursor: undefined }),
+        120 + (deterministicHash("all-candidates") % 80)
+      );
+    });
+  }
+
+  sortCandidates(
+    items: BasenameCandidate[],
+    sort: CandidateFilters["sort"]
+  ): BasenameCandidate[] {
+    return [...items].sort((a, b) => this.sortComparer(a, b, sort));
+  }
+
   async getCandidates(
     filters: CandidateFilters,
     limit = 40
   ): Promise<CandidatesResponse> {
     const [minLen, maxLen] = filters.lengthRange;
     const allowedKinds = new Set(filters.kinds);
-    const items = MOCK_DATA.filter((item) => {
+    const { items: allItems } = await this.getAllCandidates();
+    const filtered = allItems.filter((item) => {
       if (item.length < minLen || item.length > maxLen) {
         return false;
       }
@@ -311,16 +218,10 @@ class BasenameService {
         return item.kind.some((kind) => allowedKinds.has(kind));
       }
       return true;
-    })
-      .sort((a, b) => this.sortComparer(a, b, filters.sort))
-      .slice(0, limit);
-
-    return new Promise((resolve) => {
-      globalThis.setTimeout(
-        () => resolve({ items, nextCursor: undefined }),
-        120 + (deterministicHash(`${minLen}-${maxLen}-${filters.sort}`) % 80)
-      );
     });
+
+    const sorted = this.sortCandidates(filtered, filters.sort);
+    return { items: limit ? sorted.slice(0, limit) : sorted, nextCursor: undefined };
   }
 
   async checkName(name: string): Promise<NameCheckResponse> {

@@ -1,8 +1,9 @@
 import { create } from "zustand";
 import type { CandidateFilters, NameKind } from "../types/basename";
 
-export const DEFAULT_LENGTH_RANGE: [number, number] = [3, 6];
+export const DEFAULT_LENGTH_RANGE: [number, number] = [3, 4];
 export const DEFAULT_KINDS: NameKind[] = ["short", "word", "pattern"];
+const INITIAL_SELECTED_KINDS: NameKind[] = ["short"];
 
 interface FiltersState extends CandidateFilters {
   setLengthRange: (range: [number, number]) => void;
@@ -13,7 +14,7 @@ interface FiltersState extends CandidateFilters {
 
 export const useFiltersStore = create<FiltersState>((set) => ({
   lengthRange: [...DEFAULT_LENGTH_RANGE] as [number, number],
-  kinds: [...DEFAULT_KINDS],
+  kinds: [...INITIAL_SELECTED_KINDS],
   sort: "score",
   setLengthRange: (range) =>
     set(() => {
@@ -25,6 +26,9 @@ export const useFiltersStore = create<FiltersState>((set) => ({
     }),
   toggleKind: (kind) =>
     set((state) => {
+      if (kind === "pattern") {
+        return state;
+      }
       const kinds = new Set(state.kinds);
       if (kinds.has(kind)) {
         kinds.delete(kind);
@@ -32,13 +36,13 @@ export const useFiltersStore = create<FiltersState>((set) => ({
         kinds.add(kind);
       }
       const nextKinds = Array.from(kinds);
-      return { kinds: nextKinds.length > 0 ? nextKinds : [...DEFAULT_KINDS] };
+      return { kinds: nextKinds.length > 0 ? nextKinds : [...INITIAL_SELECTED_KINDS] };
     }),
   setSort: (sort) => set(() => ({ sort })),
   reset: () =>
     set(() => ({
       lengthRange: [...DEFAULT_LENGTH_RANGE] as [number, number],
-      kinds: [...DEFAULT_KINDS],
+      kinds: [...INITIAL_SELECTED_KINDS],
       sort: "score",
     })),
 }));

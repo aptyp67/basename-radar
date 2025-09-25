@@ -83,6 +83,12 @@ export function HomePage() {
     scrollToListTop();
   };
 
+  const handleShuffle = useCallback(() => {
+    setPage(1);
+    refresh();
+    scrollToListTop();
+  }, [refresh, scrollToListTop]);
+
   return (
     <main className={styles.page}>
       <section className={styles.hero}>
@@ -97,7 +103,7 @@ export function HomePage() {
 
       <section className={styles.layout}>
         <aside className={styles.sidebar}>
-          <FiltersBar />
+          <FiltersBar onShuffle={handleShuffle} />
         </aside>
         <div className={styles.content}>
           <div ref={listContainerRef}>

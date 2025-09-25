@@ -12,6 +12,7 @@ interface Metrics {
   registerClicks: number;
   watchClicks: number;
   filterChanges: number;
+  shuffleClicks: number;
   lastApiLatencyMs: number | null;
   renderedCards: number;
   averageScore: number;
@@ -35,6 +36,7 @@ export const useUIStore = create<UIState>((set) => ({
     registerClicks: 0,
     watchClicks: 0,
     filterChanges: 0,
+    shuffleClicks: 0,
     lastApiLatencyMs: null,
     renderedCards: 0,
     averageScore: 0,
