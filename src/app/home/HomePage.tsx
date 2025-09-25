@@ -7,7 +7,7 @@ import { useCandidates } from "../../hooks/useCandidates";
 import { Pagination } from "../../components/ui/Pagination";
 import styles from "./HomePage.module.css";
 
-const ITEMS_PER_PAGE = 9;
+const ITEMS_PER_PAGE = 10;
 const LIST_SCROLL_OFFSET_PX = 24;
 
 export function HomePage() {

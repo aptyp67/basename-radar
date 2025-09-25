@@ -15,13 +15,18 @@ interface FiltersState extends CandidateFilters {
   setSort: (sort: CandidateFilters["sort"]) => void;
   toggleSortDirection: () => void;
   reset: () => void;
+  isDefault: () => boolean;
 }
 
 function sortNumeric(values: Iterable<number>): number[] {
   return Array.from(values).sort((a, b) => a - b);
 }
 
-export const useFiltersStore = create<FiltersState>((set) => ({
+function arraysEqual<T>(a: readonly T[], b: readonly T[]): boolean {
+  return a.length === b.length && a.every((value, index) => value === b[index]);
+}
+
+export const useFiltersStore = create<FiltersState>((set, get) => ({
   lengths: [...DEFAULT_SELECTED_LENGTHS],
   anyLength: false,
   kinds: [...INITIAL_SELECTED_KINDS],
@@ -85,4 +90,14 @@ export const useFiltersStore = create<FiltersState>((set) => ({
       sort: "score",
       sortDirection: DEFAULT_SORT_DIRECTION,
     })),
+  isDefault: () => {
+    const state = get();
+    return (
+      state.anyLength === false &&
+      arraysEqual(state.lengths, DEFAULT_SELECTED_LENGTHS) &&
+      arraysEqual(state.kinds, INITIAL_SELECTED_KINDS) &&
+      state.sort === "score" &&
+      state.sortDirection === DEFAULT_SORT_DIRECTION
+    );
+  },
 }));

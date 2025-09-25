@@ -2,7 +2,11 @@ import clsx from "clsx";
 import { useMemo } from "react";
 import { Button } from "../ui/Button";
 import styles from "./FiltersBar.module.css";
-import { useFiltersStore, DEFAULT_KINDS, LENGTH_OPTIONS } from "../../store/filters.store";
+import {
+  useFiltersStore,
+  DEFAULT_KINDS,
+  LENGTH_OPTIONS,
+} from "../../store/filters.store";
 import type { NameKind } from "../../types/basename";
 import { useUIStore } from "../../store/ui.store";
 
@@ -33,10 +37,12 @@ export function FiltersBar({ onShuffle }: FiltersBarProps) {
     setSort,
     toggleSortDirection,
     reset,
+    isDefault,
   } = useFiltersStore();
   const trackEvent = useUIStore((state) => state.trackEvent);
   const lengthSet = useMemo(() => new Set(lengths), [lengths]);
   const kindSet = useMemo(() => new Set(kinds), [kinds]);
+  const resetDisabled = isDefault();
 
   const handleSelectKind = (kind: NameKind) => {
     toggleKind(kind);
@@ -97,7 +103,10 @@ export function FiltersBar({ onShuffle }: FiltersBarProps) {
           ))}
           <button
             type="button"
-            className={clsx(styles.toggleButton, anyLength && styles.toggleButtonActive)}
+            className={clsx(
+              styles.toggleButton,
+              anyLength && styles.toggleButtonActive
+            )}
             onClick={handleToggleAnyLength}
           >
             Any length
@@ -152,20 +161,28 @@ export function FiltersBar({ onShuffle }: FiltersBarProps) {
       </div>
 
       <div className={styles.actions}>
-        <Button type="button" variant="secondary" size="md" onClick={handleShuffle} disabled={!onShuffle}>
-          🤖 Generate
-        </Button>
         <Button
           type="button"
           variant="secondary"
           size="md"
-          onClick={() => {
-            reset();
-            trackEvent("filterChanges");
-          }}
+          onClick={handleShuffle}
+          disabled={!onShuffle}
         >
-          Reset
+          🤖 Generate
         </Button>
+        {!resetDisabled && (
+          <Button
+            type="button"
+            variant="secondary"
+            size="md"
+            onClick={() => {
+              reset();
+              trackEvent("filterChanges");
+            }}
+          >
+            Reset
+          </Button>
+        )}
       </div>
     </div>
   );

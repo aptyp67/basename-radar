@@ -34,7 +34,8 @@ const UNIQUE_WORDS = Array.from(
 );
 
 const nameRegex = /^[a-z0-9-]{3,50}$/;
-const REGISTRAR_CONTROLLER_ADDRESS = "0x4cCb0BB02FCABA27e82a56646E81d8c5bC4119a5";
+const REGISTRAR_CONTROLLER_ADDRESS =
+  "0x4cCb0BB02FCABA27e82a56646E81d8c5bC4119a5";
 const DEFAULT_RENTAL_DURATION = 31_536_000n; // 365 days in seconds
 const registrarControllerAbi = [
   {
@@ -116,7 +117,7 @@ function isAlternating(value: string): boolean {
   return value.split(pattern).join("") === "";
 }
 
-function buildReasons(name: string, kinds: NameKind[]): string[] {
+function buildReasons(name: string): string[] {
   const reasons = new Set<string>();
   if (name.length <= 4) {
     reasons.add(`short-${name.length}`);
@@ -170,18 +171,13 @@ const MOCK_DATA: BasenameCandidate[] = UNIQUE_WORDS.map((name) => {
     score: computeScore(normalized, kinds),
     availability,
     priceWei,
-    reasons: buildReasons(normalized, kinds),
+    reasons: buildReasons(normalized),
   };
 });
 
 class BasenameService {
   async getAllCandidates(): Promise<CandidatesResponse> {
-    return new Promise((resolve) => {
-      globalThis.setTimeout(
-        () => resolve({ items: [...MOCK_DATA], nextCursor: undefined }),
-        120 + (deterministicHash("all-candidates") % 80)
-      );
-    });
+    return { items: [...MOCK_DATA], nextCursor: undefined };
   }
 
   sortCandidates(
@@ -210,8 +206,15 @@ class BasenameService {
       return true;
     });
 
-    const sorted = this.sortCandidates(filtered, filters.sort, filters.sortDirection);
-    return { items: limit ? sorted.slice(0, limit) : sorted, nextCursor: undefined };
+    const sorted = this.sortCandidates(
+      filtered,
+      filters.sort,
+      filters.sortDirection
+    );
+    return {
+      items: limit ? sorted.slice(0, limit) : sorted,
+      nextCursor: undefined,
+    };
   }
 
   async checkName(name: string): Promise<NameCheckResponse> {
@@ -263,23 +266,14 @@ class BasenameService {
     }
   }
 
-  async watchName(name: string): Promise<WatchResponse> {
-    const hash = deterministicHash(name);
-    return new Promise((resolve) => {
-      globalThis.setTimeout(() => resolve({ ok: true }), 100 + (hash % 50));
-    });
+  async watchName(): Promise<WatchResponse> {
+    return { ok: true };
   }
 
   async registerIntent(name: string): Promise<RegisterIntentResponse> {
     const baseUrl = import.meta.env.VITE_APP_URL ?? "https://your-domain.xyz";
     const checkoutUrl = `${baseUrl}/checkout?name=${encodeURIComponent(name)}`;
-    const hash = deterministicHash(name);
-    return new Promise((resolve) => {
-      globalThis.setTimeout(
-        () => resolve({ ok: true, checkoutUrl }),
-        150 + (hash % 50)
-      );
-    });
+    return { ok: true, checkoutUrl };
   }
 
   private sortComparer(
@@ -290,7 +284,9 @@ class BasenameService {
   ): number {
     const isAscending = direction === "asc";
     if (sort === "alpha") {
-      return isAscending ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+      return isAscending
+        ? a.name.localeCompare(b.name)
+        : b.name.localeCompare(a.name);
     }
 
     return isAscending ? a.score - b.score : b.score - a.score;
