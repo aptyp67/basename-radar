@@ -324,11 +324,11 @@ class BasenameService {
   }
 
   async checkName(name: string): Promise<NameCheckResponse> {
-    if (!nameRegex.test(name)) {
+    const normalized = name.trim().toLowerCase();
+    if (!nameRegex.test(normalized)) {
       return { availability: "unknown" };
     }
 
-    const normalized = name.toLowerCase();
     if (
       normalized.includes("--") ||
       normalized.startsWith("-") ||

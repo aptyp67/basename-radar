@@ -10,8 +10,7 @@ later without rewriting components.
 - Length (3–6), kind (short / word / pattern), and score/price/alphabetical sorting controls
 - Live name search with validation and mocked availability + price checks (cached client-side)
 - Register (opens mocked checkout link) and Watch (toast success) actions with tracking metrics
-- Full web UX at `/` plus Farcaster-friendly compact UI at `/mini`
-- `/debug` console summarising interactions, average score, render count, and mock latency
+- Full web UX at `/` plus Farcaster-friendly compact UI at `/mini` (linked externally for Farcaster app)
 - Prepared hydration for wagmi, viem, and OnchainKit configs + Solidity stubs for upcoming contracts
 
 ## Getting started
@@ -45,7 +44,6 @@ VITE_APP_URL=https://your-domain.xyz
   /app
     /home/HomePage.tsx           # Full web interface
     /mini/MiniPage.tsx           # Compact Farcaster-ready UI
-    /debug/DebugPage.tsx         # Dev metrics view
   /components
     /ui                          # Shared primitives (Button, Input, etc.)
     /basename                    # Domain-specific UI modules
