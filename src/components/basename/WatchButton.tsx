@@ -6,14 +6,18 @@ import { useUIStore } from "../../store/ui.store";
 interface WatchButtonProps {
   name: string;
   fullWidth?: boolean;
+  disabled?: boolean;
 }
 
-export function WatchButton({ name, fullWidth }: WatchButtonProps) {
+export function WatchButton({ name, fullWidth, disabled = false }: WatchButtonProps) {
   const [loading, setLoading] = useState(false);
   const addToast = useUIStore((state) => state.addToast);
   const trackEvent = useUIStore((state) => state.trackEvent);
 
   const handleClick = async () => {
+    if (disabled) {
+      return;
+    }
     try {
       setLoading(true);
       trackEvent("watchClicks");
@@ -30,7 +34,13 @@ export function WatchButton({ name, fullWidth }: WatchButtonProps) {
   };
 
   return (
-    <Button type="button" variant="secondary" onClick={handleClick} disabled={loading} fullWidth={fullWidth}>
+    <Button
+      type="button"
+      variant="secondary"
+      onClick={handleClick}
+      disabled={loading || disabled}
+      fullWidth={fullWidth}
+    >
       {loading ? "Adding…" : "Watch"}
     </Button>
   );

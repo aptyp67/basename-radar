@@ -1,14 +1,43 @@
-import { Outlet, Route, Routes } from "react-router-dom";
+import { Outlet, Route, Routes, Link } from "react-router-dom";
 import { HomePage } from "./app/home/HomePage";
 import { MiniPage } from "./app/mini/MiniPage";
+import { RegisterPage } from "./app/register/RegisterPage";
 import { ToastContainer } from "./components/ui/ToastContainer";
+import { Button } from "./components/ui/Button";
+import { useWalletStore } from "./store/wallet.store";
 import styles from "./App.module.css";
 
 function Layout() {
+  const isConnected = useWalletStore((state) => state.isConnected);
+  const address = useWalletStore((state) => state.address);
+  const connect = useWalletStore((state) => state.connect);
+  const disconnect = useWalletStore((state) => state.disconnect);
+
+  const handleWalletClick = () => {
+    if (isConnected) {
+      disconnect();
+    } else {
+      connect();
+    }
+  };
+
   return (
     <div className={styles.shell}>
       <header className={styles.navbar}>
-        <span className={styles.brand}>Basename Radar</span>
+        <Link to="/" className={styles.brandLink}>
+          <span className={styles.brandTile} aria-hidden="true">
+            <span className={styles.brandGlyph}>B</span>
+          </span>
+          <span className={styles.brandLabel}>Basename Radar</span>
+        </Link>
+        <Button
+          type="button"
+          size="sm"
+          className={styles.walletButton}
+          onClick={handleWalletClick}
+        >
+          {isConnected ? shortenAddress(address) : "Sign In"}
+        </Button>
       </header>
       <div className={styles.main}>
         <Outlet />
@@ -28,7 +57,15 @@ export function App() {
       <Route element={<Layout />}>
         <Route index element={<HomePage />} />
         <Route path="mini" element={<MiniPage />} />
+        <Route path="register/:name" element={<RegisterPage />} />
       </Route>
     </Routes>
   );
+}
+
+function shortenAddress(value?: string | null): string {
+  if (!value) {
+    return "Wallet";
+  }
+  return `${value.slice(0, 6)}…${value.slice(-4)}`;
 }

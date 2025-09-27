@@ -62,6 +62,12 @@ export function NameCard({ candidate }: NameCardProps) {
         <div className={styles.actions}>
           <RegisterButton
             name={candidate.name}
+            priceWei={priceWei ?? candidate.priceWei}
+            availability={availability}
+            score={candidate.score}
+            reasons={candidate.reasons}
+            kinds={candidate.kind}
+            length={candidate.length}
             disabled={availability === "taken" || isChecking}
             fullWidth
           />

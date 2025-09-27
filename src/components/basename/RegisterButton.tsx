@@ -1,39 +1,47 @@
-import { useState } from "react";
 import { Button } from "../ui/Button";
-import { basenameService } from "../../services/basename.service";
 import { useUIStore } from "../../store/ui.store";
+import { useNavigate } from "react-router-dom";
+import type { Availability, NameKind } from "../../types/basename";
 
 interface RegisterButtonProps {
   name: string;
+  priceWei?: string;
+  availability: Availability;
+  score: number;
+  reasons: string[];
+  kinds: NameKind[];
+  length: number;
   disabled?: boolean;
   fullWidth?: boolean;
 }
 
-export function RegisterButton({ name, disabled, fullWidth }: RegisterButtonProps) {
-  const [loading, setLoading] = useState(false);
-  const addToast = useUIStore((state) => state.addToast);
+export function RegisterButton({
+  name,
+  priceWei,
+  availability,
+  score,
+  reasons,
+  kinds,
+  length,
+  disabled,
+  fullWidth,
+}: RegisterButtonProps) {
   const trackEvent = useUIStore((state) => state.trackEvent);
+  const navigate = useNavigate();
 
-  const handleClick = async () => {
-    try {
-      setLoading(true);
-      trackEvent("registerClicks");
-      const { checkoutUrl } = await basenameService.registerIntent(name);
-      window.open(checkoutUrl, "_blank", "noopener,noreferrer");
-      addToast({ variant: "info", message: "Opening official registrar…" });
-    } catch (error) {
-      addToast({
-        variant: "error",
-        message: error instanceof Error ? error.message : "Could not create register intent",
-      });
-    } finally {
-      setLoading(false);
-    }
+  const handleClick = () => {
+    trackEvent("registerClicks");
+    navigate(`/register/${encodeURIComponent(name)}`, {
+      state: {
+        priceWei,
+        availability,
+        score,
+        reasons,
+        kinds,
+        length,
+      },
+    });
   };
 
-  return (
-    <Button type="button" onClick={handleClick} disabled={disabled || loading} fullWidth={fullWidth}>
-      {loading ? "Loading…" : "Register"}
-    </Button>
-  );
+  return <Button type="button" onClick={handleClick} disabled={disabled} fullWidth={fullWidth}>Register</Button>;
 }

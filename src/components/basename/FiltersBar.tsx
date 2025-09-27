@@ -12,7 +12,7 @@ import { useUIStore } from "../../store/ui.store";
 
 const KIND_LABELS: Record<NameKind, string> = {
   palindrome: "Palindrome",
-  word: "Any word",
+  word: "Any name",
 };
 
 const SORT_LABELS: Record<"score" | "alpha", string> = {
