@@ -40,6 +40,7 @@ export function RegisterPage() {
   const trackEvent = useUIStore((state) => state.trackEvent);
   const isConnected = useWalletStore((state) => state.isConnected);
   const connectWallet = useWalletStore((state) => state.connect);
+  const isConnecting = useWalletStore((state) => state.isConnecting);
 
   const displayName = formatName(rawName);
   const breadcrumbName = displayName.split(".")[0] ?? displayName;
@@ -84,7 +85,7 @@ export function RegisterPage() {
 
   const handleRegister = () => {
     if (!isConnected) {
-      connectWallet();
+      void connectWallet();
       return;
     }
     trackEvent("registerClicks");
@@ -183,11 +184,13 @@ export function RegisterPage() {
                 {!isConnected && (
                   <Button
                     type="button"
-                    onClick={connectWallet}
-                    disabled={disableActions}
+                    onClick={() => {
+                      void connectWallet();
+                    }}
+                    disabled={disableActions || isConnecting}
                     fullWidth
                   >
-                    Connect Wallet
+                    {isConnecting ? "Connecting…" : "Connect Wallet"}
                   </Button>
                 )}
 
@@ -305,7 +308,7 @@ function formatKindTag(kind: NameKind): string {
   if (kind === "palindrome") {
     return "PALINDROME";
   }
-  return kind.toUpperCase();
+  return (kind as string).toUpperCase();
 }
 
 function formatUsd(value: bigint): string {

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Outlet, Route, Routes, Link } from "react-router-dom";
 import { HomePage } from "./app/home/HomePage";
 import { MiniPage } from "./app/mini/MiniPage";
@@ -12,12 +13,18 @@ function Layout() {
   const address = useWalletStore((state) => state.address);
   const connect = useWalletStore((state) => state.connect);
   const disconnect = useWalletStore((state) => state.disconnect);
+  const isConnecting = useWalletStore((state) => state.isConnecting);
+  const initializeWallet = useWalletStore((state) => state.initialize);
+
+  useEffect(() => {
+    void initializeWallet();
+  }, [initializeWallet]);
 
   const handleWalletClick = () => {
     if (isConnected) {
       disconnect();
     } else {
-      connect();
+      void connect();
     }
   };
 
@@ -35,8 +42,9 @@ function Layout() {
           size="sm"
           className={styles.walletButton}
           onClick={handleWalletClick}
+          disabled={isConnecting}
         >
-          {isConnected ? shortenAddress(address) : "Sign In"}
+          {isConnecting ? "Connecting…" : isConnected ? shortenAddress(address) : "Sign In"}
         </Button>
       </header>
       <div className={styles.main}>

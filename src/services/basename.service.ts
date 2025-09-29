@@ -266,7 +266,7 @@ class BasenameService {
     }
   }
 
-  async watchName(): Promise<WatchResponse> {
+  async watchName(_: string): Promise<WatchResponse> {
     return { ok: true };
   }
 
