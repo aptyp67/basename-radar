@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { useSwitchChain } from "wagmi";
+import { UserRejectedRequestError } from "viem";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { NameSearch } from "../../components/basename/NameSearch";
 import { Badge } from "../../components/ui/Badge";
@@ -8,14 +10,21 @@ import { useNameAvailability } from "../../hooks/useNameAvailability";
 import { availabilityCopy, formatReason, formatWei } from "../../lib/format";
 import { useWalletStore } from "../../store/wallet.store";
 import { useUIStore } from "../../store/ui.store";
+import { useRegisterWithFee } from "../../hooks/useRegisterWithFee";
+import {
+  REGISTER_WITH_FEE_BPS,
+  REGISTER_WITH_FEE_CHAIN_ID,
+  calculateTotalWithFee,
+} from "../../services/registerWithFee.contract";
 import type { Availability, NameKind } from "../../types/basename";
 import styles from "./RegisterPage.module.css";
 
 const DEFAULT_PRICE_WEI = 1_000_000_000_000_000n; // 0.001 ETH
 const ETH_IN_WEI = 1_000_000_000_000_000_000n;
 const ETH_TO_USD = 4000;
-const GAS_WEI = 210_000_000_000_000n; // 0.00021 ETH placeholder
-const PROTOCOL_FEE_WEI = 90_000_000_000_000n; // 0.00009 ETH placeholder
+const REQUIRED_CHAIN_HEX = `0x${REGISTER_WITH_FEE_CHAIN_ID.toString(16)}`;
+const WRAPPER_FEE_PERCENT = `${(Number(REGISTER_WITH_FEE_BPS) / 100).toFixed(2)}%`;
+const BASESCAN_TX_URL = "https://sepolia.basescan.org/tx/";
 
 const AVAILABILITY_TONE = {
   available: "success" as const,
@@ -41,6 +50,9 @@ export function RegisterPage() {
   const isConnected = useWalletStore((state) => state.isConnected);
   const connectWallet = useWalletStore((state) => state.connect);
   const isConnecting = useWalletStore((state) => state.isConnecting);
+  const chainId = useWalletStore((state) => state.chainId);
+  const { register, isRegistering } = useRegisterWithFee();
+  const { switchChainAsync, isPending: isSwitchingChain } = useSwitchChain();
 
   const displayName = formatName(rawName);
   const breadcrumbName = displayName.split(".")[0] ?? displayName;
@@ -56,8 +68,10 @@ export function RegisterPage() {
 
   const pricePerYearWei = useMemo(() => resolvePriceWei(priceWei ?? initialPrice), [priceWei, initialPrice]);
   const registrationCostWei = useMemo(() => pricePerYearWei * BigInt(years), [pricePerYearWei, years]);
-  const gasAndFeeWei = GAS_WEI + PROTOCOL_FEE_WEI;
-  const totalCostWei = registrationCostWei + gasAndFeeWei;
+  const { total: totalCostWei, fee: wrapperFeeWei } = useMemo(
+    () => calculateTotalWithFee(registrationCostWei),
+    [registrationCostWei]
+  );
 
   const availabilityTone = isChecking ? "muted" : AVAILABILITY_TONE[availability];
   const availabilityLabel = (isChecking ? "Checking…" : availabilityCopy(availability)).toUpperCase();
@@ -65,7 +79,7 @@ export function RegisterPage() {
   const score = locationState?.score ?? null;
   const pricePerYearDisplay = formatWei(pricePerYearWei.toString());
   const registrationCostDisplay = formatWei(registrationCostWei.toString());
-  const gasAndFeeDisplay = formatWei(gasAndFeeWei.toString());
+  const wrapperFeeDisplay = formatWei(wrapperFeeWei.toString());
   const totalCostDisplay = formatWei(totalCostWei.toString());
 
   const tags = useMemo(() => buildTags(locationState?.kinds, locationState?.reasons), [
@@ -74,22 +88,65 @@ export function RegisterPage() {
   ]);
 
   const usdEstimate = formatUsd(registrationCostWei);
-  const gasUsd = formatUsd(gasAndFeeWei);
+  const wrapperFeeUsd = formatUsd(wrapperFeeWei);
   const totalUsd = formatUsd(totalCostWei);
 
   const isAvailable = availability === "available";
   const isTaken = availability === "taken";
-  const disableActions = isChecking || availability === "unknown";
+  const isOnRequiredChain = useMemo(() => {
+    if (!chainId) {
+      return true;
+    }
+    return chainId.toLowerCase() === REQUIRED_CHAIN_HEX;
+  }, [chainId]);
+  const isNamePending = isChecking || availability === "unknown";
+  const disableRegister = isNamePending || isRegistering;
+  const disableWatch = isNamePending || isRegistering;
+  const disableSwitch = isNamePending || isSwitchingChain;
 
   const durationLabel = `${years} ${years === 1 ? "year" : "years"}`;
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!isConnected) {
-      void connectWallet();
+      await connectWallet();
       return;
     }
-    trackEvent("registerClicks");
-    addToast({ variant: "info", message: "Onchain registration coming soon" });
+    if (!isOnRequiredChain) {
+      addToast({ variant: "error", message: "Switch to Base Sepolia to register" });
+      return;
+    }
+    if (!isAvailable) {
+      addToast({ variant: "error", message: "Name is not available" });
+      return;
+    }
+    try {
+      trackEvent("registerClicks");
+      const { hash } = await register({ name: displayName, years });
+      addToast({
+        variant: "success",
+        message: `Registration submitted (${formatHash(hash)})`,
+      });
+      console.info(`View transaction on BaseScan: ${BASESCAN_TX_URL}${hash}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not complete registration";
+      addToast({ variant: "error", message });
+    }
+  };
+
+  const handleSwitchNetwork = async () => {
+    if (!switchChainAsync) {
+      addToast({ variant: "error", message: "Switch networks from your wallet" });
+      return;
+    }
+    try {
+      await switchChainAsync({ chainId: REGISTER_WITH_FEE_CHAIN_ID });
+    } catch (error) {
+      const message =
+        error instanceof UserRejectedRequestError
+          ? "Network switch rejected in wallet"
+          : "Failed to switch network";
+      addToast({ variant: "error", message });
+    }
   };
 
   const handleViewOwner = () => {
@@ -187,30 +244,45 @@ export function RegisterPage() {
                     onClick={() => {
                       void connectWallet();
                     }}
-                    disabled={disableActions || isConnecting}
+                    disabled={isNamePending || isConnecting}
                     fullWidth
                   >
                     {isConnecting ? "Connecting…" : "Connect Wallet"}
                   </Button>
                 )}
 
-                {isConnected && isAvailable && (
+                {isConnected && !isOnRequiredChain && (
                   <Button
                     type="button"
-                    onClick={handleRegister}
-                    disabled={disableActions}
+                    onClick={() => {
+                      void handleSwitchNetwork();
+                    }}
+                    disabled={disableSwitch}
                     fullWidth
                   >
-                    Register
+                    {isSwitchingChain ? "Switching…" : "Switch to Base Sepolia"}
+                  </Button>
+                )}
+
+                {isConnected && isOnRequiredChain && isAvailable && (
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      void handleRegister();
+                    }}
+                    disabled={disableRegister}
+                    fullWidth
+                  >
+                    {isRegistering ? "Registering…" : "Register"}
                   </Button>
                 )}
 
                 {isConnected && isAvailable && (
-                  <WatchButton name={displayName} fullWidth disabled={disableActions} />
+                  <WatchButton name={displayName} fullWidth disabled={disableWatch} />
                 )}
 
                 {isConnected && isTaken && (
-                  <WatchButton name={displayName} fullWidth disabled={disableActions} />
+                  <WatchButton name={displayName} fullWidth disabled={disableWatch} />
                 )}
 
                 {isConnected && isTaken && (
@@ -218,7 +290,7 @@ export function RegisterPage() {
                     type="button"
                     variant="ghost"
                     onClick={handleViewOwner}
-                    disabled={disableActions}
+                    disabled={isNamePending}
                     fullWidth
                   >
                     View Owner
@@ -232,7 +304,7 @@ export function RegisterPage() {
                 )}
 
                 {!isConnected && isTaken && (
-                  <WatchButton name={displayName} fullWidth disabled={disableActions} />
+                  <WatchButton name={displayName} fullWidth disabled={isNamePending} />
                 )}
               </div>
             </div>
@@ -240,10 +312,10 @@ export function RegisterPage() {
 
           <div className={styles.pricingBreakdown}>
             <div className={styles.breakdownItem}>
-              <span className={styles.breakdownLabel}>Base Gas + Protocol Fee</span>
+              <span className={styles.breakdownLabel}>Wrapper Fee ({WRAPPER_FEE_PERCENT})</span>
               <span className={styles.breakdownValue}>
-                {gasAndFeeDisplay}
-                <span className={styles.breakdownMeta}>≈ ${gasUsd}</span>
+                {wrapperFeeDisplay}
+                <span className={styles.breakdownMeta}>≈ ${wrapperFeeUsd}</span>
               </span>
             </div>
             <div className={styles.breakdownItem}>
@@ -317,6 +389,10 @@ function formatUsd(value: bigint): string {
     return "0.00";
   }
   return (eth * ETH_TO_USD).toFixed(2);
+}
+
+function formatHash(hash: `0x${string}`): string {
+  return `${hash.slice(0, 6)}…${hash.slice(-4)}`;
 }
 
 function StarIcon() {
