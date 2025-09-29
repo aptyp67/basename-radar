@@ -5,7 +5,7 @@ interface EIP1193RequestArguments {
 
 type EIP1193Event = "connect" | "disconnect" | "chainChanged" | "accountsChanged" | string;
 
-type EIP1193EventHandler = (...args: any[]) => void;
+type EIP1193EventHandler = (...args: unknown[]) => void;
 
 export interface EthereumProvider {
   isMetaMask?: boolean;

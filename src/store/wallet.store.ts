@@ -1,14 +1,15 @@
 import { create } from "zustand";
 import {
-  connectMetaMask,
-  getAccounts,
-  getChainId,
-  isMetaMaskAvailable,
-  onAccountsChanged,
-  onChainChanged,
-  onDisconnect,
-} from "../services/metamask";
+  connect as wagmiConnect,
+  disconnect as wagmiDisconnect,
+  getAccount,
+  watchAccount,
+} from "@wagmi/core";
+import { numberToHex } from "viem";
+import { wagmiConfig, injectedConnector } from "../lib/wagmi";
+import { WATCHLIST_CHAIN_ID } from "../services/watchlist.contract";
 import { useUIStore } from "./ui.store";
+import { isMetaMaskAvailable } from "../services/metamask";
 
 interface WalletState {
   isInstalled: boolean;
@@ -18,7 +19,7 @@ interface WalletState {
   chainId: string | null;
   initialize: () => Promise<void>;
   connect: () => Promise<void>;
-  disconnect: () => void;
+  disconnect: () => Promise<void>;
 }
 
 const INITIAL_STATE = {
@@ -31,75 +32,51 @@ const INITIAL_STATE = {
 
 export const useWalletStore = create<WalletState>((set, get) => {
   let hasInitialized = false;
-  let unsubscribeAccounts: (() => void) | null = null;
+  let unsubscribeAccount: (() => void) | null = null;
 
   const addToast = useUIStore.getState().addToast;
-
-  const registerListeners = () => {
-    if (unsubscribeAccounts || !isMetaMaskAvailable()) {
-      return;
-    }
-
-    unsubscribeAccounts = onAccountsChanged((accounts) => {
-      const currentState = get();
-      if (accounts.length === 0) {
-        if (!currentState.isConnected) {
-          return;
-        }
-        set({ isConnected: false, address: null });
-        addToast({ variant: "info", message: "Wallet disconnected" });
-        return;
-      }
-
-      const [nextAddress] = accounts;
-      if (!nextAddress) {
-        return;
-      }
-
-      if (currentState.address === nextAddress) {
-        return;
-      }
-
-      set({
-        isConnected: true,
-        address: nextAddress,
-        chainId: currentState.chainId,
-      });
-
-      if (currentState.isConnected) {
-        addToast({ variant: "info", message: "Switched MetaMask account" });
-      }
-    });
-
-    onChainChanged((chainId) => {
-      const currentChainId = get().chainId;
-      if (currentChainId === chainId) {
-        return;
-      }
-      set({ chainId });
-      if (get().isConnected) {
-        addToast({ variant: "info", message: formatChainChangeMessage(chainId) });
-      }
-    });
-
-    onDisconnect(() => {
-      const currentState = get();
-      if (!currentState.isConnected && !currentState.address) {
-        return;
-      }
-      set({ isConnected: false, address: null });
-      addToast({ variant: "info", message: "Wallet disconnected" });
-    });
-  };
 
   const ensureAvailability = (): boolean => {
     const available = isMetaMaskAvailable();
     set({ isInstalled: available });
     if (!available) {
       addToast({ variant: "error", message: "MetaMask extension is not detected" });
-      return false;
     }
-    return true;
+    return available;
+  };
+
+  const applyAccountState = () => {
+    const account = getAccount(wagmiConfig);
+    const nextChainId = toChainIdHex(account.chainId);
+
+    set({
+      isInstalled: true,
+      isConnected: account.isConnected,
+      address: account.address ?? null,
+      chainId: nextChainId,
+    });
+  };
+
+  const handleAccountChange = () => {
+    const previous = get();
+    applyAccountState();
+    const current = get();
+
+    if (!previous.isConnected && current.isConnected) {
+      addToast({ variant: "success", message: "Wallet connected" });
+    }
+
+    if (previous.isConnected && !current.isConnected) {
+      addToast({ variant: "info", message: "Wallet disconnected" });
+    }
+
+    if (previous.address && current.address && previous.address !== current.address) {
+      addToast({ variant: "info", message: "Switched MetaMask account" });
+    }
+
+    if (previous.chainId !== current.chainId && current.chainId) {
+      addToast({ variant: "info", message: formatChainChangeMessage(current.chainId) });
+    }
   };
 
   return {
@@ -116,48 +93,31 @@ export const useWalletStore = create<WalletState>((set, get) => {
         return;
       }
 
-      registerListeners();
-      try {
-        const accounts = await getAccounts();
-        const chainId = await getChainId();
-        if (accounts.length > 0) {
-          set({
-            isConnected: true,
-            address: accounts[0] ?? null,
-            chainId,
-          });
-        } else {
-          set({
-            isConnected: false,
-            address: null,
-            chainId,
-          });
-        }
-      } catch (error) {
-        console.warn("Failed to initialize MetaMask connection", error);
+      applyAccountState();
+
+      if (unsubscribeAccount) {
+        unsubscribeAccount();
       }
+
+      unsubscribeAccount = watchAccount(wagmiConfig, {
+        onChange: handleAccountChange,
+      });
     },
     connect: async () => {
       if (get().isConnecting) {
         return;
       }
-
       if (!ensureAvailability()) {
         return;
       }
 
-      registerListeners();
       set({ isConnecting: true });
-
       try {
-        const { address, chainId } = await connectMetaMask();
-        set({
-          isConnected: true,
-          address,
-          chainId,
-          isInstalled: true,
+        await wagmiConnect(wagmiConfig, {
+          connector: injectedConnector,
+          chainId: WATCHLIST_CHAIN_ID,
         });
-        addToast({ variant: "success", message: "Wallet connected" });
+        applyAccountState();
       } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to connect wallet";
         addToast({ variant: "error", message });
@@ -165,28 +125,42 @@ export const useWalletStore = create<WalletState>((set, get) => {
         set({ isConnecting: false });
       }
     },
-    disconnect: () => {
+    disconnect: async () => {
       const currentState = get();
       if (!currentState.isConnected) {
         return;
       }
-      set({ isConnected: false, address: null });
-      addToast({ variant: "info", message: "Wallet disconnected" });
+      try {
+        await wagmiDisconnect(wagmiConfig);
+      } catch (error) {
+        console.warn("Failed to disconnect wallet", error);
+      } finally {
+        applyAccountState();
+      }
     },
   };
 });
 
-function formatChainChangeMessage(chainId: string | null): string {
-  if (!chainId) {
-    return "Switched network";
+function toChainIdHex(chainId: number | undefined): string | null {
+  if (typeof chainId !== "number") {
+    return null;
   }
   try {
-    const numericId = Number.parseInt(chainId, 16);
+    return numberToHex(chainId);
+  } catch (error) {
+    console.warn("Unable to convert chain id to hex", chainId, error);
+    return null;
+  }
+}
+
+function formatChainChangeMessage(chainIdHex: string): string {
+  try {
+    const numericId = Number.parseInt(chainIdHex, 16);
     if (Number.isSafeInteger(numericId)) {
       return `Switched network (chain ${numericId})`;
     }
   } catch (error) {
-    console.warn("Unable to format chain id", chainId, error);
+    console.warn("Unable to format chain id", chainIdHex, error);
   }
-  return `Switched network (${chainId})`;
+  return `Switched network (${chainIdHex})`;
 }

@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import { Button } from "../ui/Button";
-import { basenameService } from "../../services/basename.service";
 import { useUIStore } from "../../store/ui.store";
+import { useWalletStore } from "../../store/wallet.store";
+import { useToggleWatch } from "../../hooks/useWatchlist";
+import { WATCHLIST_CHAIN_ID } from "../../services/watchlist.contract";
 
 interface WatchButtonProps {
   name: string;
@@ -9,39 +11,74 @@ interface WatchButtonProps {
   disabled?: boolean;
 }
 
+function formatHash(hash: `0x${string}`): string {
+  return `${hash.slice(0, 6)}…${hash.slice(-4)}`;
+}
+
 export function WatchButton({ name, fullWidth, disabled = false }: WatchButtonProps) {
-  const [loading, setLoading] = useState(false);
   const addToast = useUIStore((state) => state.addToast);
   const trackEvent = useUIStore((state) => state.trackEvent);
+  const isConnected = useWalletStore((state) => state.isConnected);
+  const connectWallet = useWalletStore((state) => state.connect);
+  const isConnecting = useWalletStore((state) => state.isConnecting);
+  const chainId = useWalletStore((state) => state.chainId);
+
+  const { watch, unwatch, isPending, isWatching } = useToggleWatch(name);
+  const isOnRequiredChain = useMemo(() => {
+    if (!chainId) {
+      return true;
+    }
+    const requiredChainHex = `0x${WATCHLIST_CHAIN_ID.toString(16)}`;
+    return chainId.toLowerCase() === requiredChainHex;
+  }, [chainId]);
+
+  const busy = disabled || isPending || isConnecting;
+
+  const label = useMemo(() => {
+    if (!isConnected) {
+      return isConnecting ? "Connecting…" : isWatching ? "Watching" : "Watch";
+    }
+    if (isPending) {
+      return "Saving…";
+    }
+    return isWatching ? "Watching" : "Watch";
+  }, [isConnected, isPending, isWatching, isConnecting]);
 
   const handleClick = async () => {
     if (disabled) {
       return;
     }
+
+    if (!isConnected) {
+      await connectWallet();
+      return;
+    }
+
+    if (!isOnRequiredChain) {
+      addToast({ variant: "error", message: "Switch to Base Sepolia to manage your watchlist" });
+      return;
+    }
+
     try {
-      setLoading(true);
       trackEvent("watchClicks");
-      await basenameService.watchName(name);
-      addToast({ variant: "success", message: `${name} added to watchlist` });
-    } catch (error) {
+      const hash = isWatching ? await unwatch() : await watch();
       addToast({
-        variant: "error",
-        message: error instanceof Error ? error.message : "Could not add to watchlist",
+        variant: "success",
+        message: isWatching
+          ? `${name} removed from watchlist (${formatHash(hash)})`
+          : `${name} added to watchlist (${formatHash(hash)})`,
       });
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Could not update watchlist";
+      addToast({ variant: "error", message });
     }
   };
 
+  const variant = isWatching ? "success" : "secondary";
+
   return (
-    <Button
-      type="button"
-      variant="secondary"
-      onClick={handleClick}
-      disabled={loading || disabled}
-      fullWidth={fullWidth}
-    >
-      {loading ? "Adding…" : "Watch"}
+    <Button type="button" variant={variant} onClick={handleClick} disabled={busy} fullWidth={fullWidth}>
+      {label}
     </Button>
   );
 }

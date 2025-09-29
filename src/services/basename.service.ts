@@ -14,10 +14,6 @@ interface RegisterIntentResponse {
   checkoutUrl: string;
 }
 
-interface WatchResponse {
-  ok: true;
-}
-
 const BASE_PRICE_WEI = {
   3: BigInt("300000000000000000"),
   4: BigInt("180000000000000000"),
@@ -264,10 +260,6 @@ class BasenameService {
       console.error("Failed to check name availability", error);
       return { availability: "unknown" };
     }
-  }
-
-  async watchName(_: string): Promise<WatchResponse> {
-    return { ok: true };
   }
 
   async registerIntent(name: string): Promise<RegisterIntentResponse> {

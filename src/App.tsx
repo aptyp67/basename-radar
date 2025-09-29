@@ -22,7 +22,7 @@ function Layout() {
 
   const handleWalletClick = () => {
     if (isConnected) {
-      disconnect();
+      void disconnect();
     } else {
       void connect();
     }

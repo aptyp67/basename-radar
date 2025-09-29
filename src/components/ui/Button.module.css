@@ -44,6 +44,18 @@
   color: var(--text-primary);
 }
 
+.success {
+  background: rgba(21, 190, 119, 0.18);
+  border-color: rgba(21, 190, 119, 0.55);
+  color: #15be77;
+}
+
+.success:hover {
+  border-color: rgba(21, 190, 119, 0.75);
+  color: #12a568;
+  background: rgba(21, 190, 119, 0.24);
+}
+
 .ghost {
   background: transparent;
   border-color: rgba(255, 255, 255, 0.08);

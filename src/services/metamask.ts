@@ -32,12 +32,19 @@ function resolveMetaMaskProvider(): EthereumProvider | null {
   }
 
   if (Array.isArray(ethereum.providers)) {
-    const provider = ethereum.providers.find((item) => Boolean(item?.isMetaMask)) ?? ethereum.providers[0] ?? null;
-    cachedProvider = provider ?? null;
+    const candidateList = (ethereum.providers as unknown[]).filter((item): item is EthereumProvider => {
+      if (!item || typeof item !== "object") {
+        return false;
+      }
+      const candidate = item as Partial<EthereumProvider>;
+      return typeof candidate.request === "function";
+    });
+    const preferred = candidateList.find((item) => Boolean(item.isMetaMask)) ?? candidateList[0] ?? null;
+    cachedProvider = preferred ?? null;
     return cachedProvider;
   }
 
-  cachedProvider = ethereum;
+  cachedProvider = (ethereum as EthereumProvider) ?? null;
   return cachedProvider;
 }
 
