@@ -51,8 +51,7 @@ function Layout() {
         <Outlet />
       </div>
       <footer className={styles.footer}>
-        Mock data only — ready for onchain integration. Built for Base +
-        Farcaster.
+        Questions or support? Email popovartur0393@gmail.com.
       </footer>
       <ToastContainer />
     </div>
