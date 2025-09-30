@@ -7,8 +7,7 @@ import type {
   NameKind,
 } from "../types/basename";
 import { withBaseRpcFallback } from "../lib/viem";
-import { base } from "viem/chains";
-import { REGISTRAR_CONTROLLER_ADDRESSES } from "./registerWithFee.contract";
+import { REGISTRAR_CONTROLLER_ADDRESS } from "./registerWithFee.contract";
 import { words as rawWords } from "../assets/words";
 
 interface RegisterIntentResponse {
@@ -32,7 +31,6 @@ const UNIQUE_WORDS = Array.from(
 );
 
 const nameRegex = /^[a-z0-9-]{3,50}$/;
-const REGISTRAR_CONTROLLER_ADDRESS = REGISTRAR_CONTROLLER_ADDRESSES[base.id];
 const DEFAULT_RENTAL_DURATION = 31_536_000n; // 365 days in seconds
 const registrarControllerAbi = [
   {

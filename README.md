@@ -27,10 +27,15 @@ The dev server runs on http://localhost:5173 by default.
 Copy `.env.example` into `.env` as needed:
 
 ```
+VITE_BASENAME_NETWORK=mainnet
 VITE_BASE_RPC=https://mainnet.base.org
+VITE_BASE_SEPOLIA_RPC=https://sepolia.base.org
 VITE_FEE_RECIPIENT=0x0000000000000000000000000000000000000000
 VITE_APP_URL=https://your-domain.xyz
 ```
+
+Set `VITE_BASENAME_NETWORK` to `sepolia` when developing against Sepolia. You can also override contract addresses with
+`VITE_REGISTER_WITH_FEE_ADDRESS`, `VITE_REGISTRAR_CONTROLLER_ADDRESS`, or `VITE_WATCHLIST_ADDRESS` if needed.
 
 `VITE_APP_URL` is reused for the mocked checkout URL. Update it when the app is hosted.
 

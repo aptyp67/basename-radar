@@ -1,8 +1,8 @@
 import { parseAbi } from "viem";
-import { baseSepolia } from "viem/chains";
+import { appNetwork } from "../config/network";
 
-export const WATCHLIST_CHAIN_ID = baseSepolia.id;
-export const WATCHLIST_ADDRESS = "0x9Fef31383Ef614beE71F72deBb9A7A22B2Fb9a15" as const;
+export const WATCHLIST_CHAIN_ID = appNetwork.chain.id;
+export const WATCHLIST_ADDRESS = appNetwork.contracts.watchlist;
 
 export const WATCHLIST_ABI = parseAbi([
   "function watch(bytes32 namehash)",

@@ -4,6 +4,7 @@ import { useUIStore } from "../../store/ui.store";
 import { useWalletStore } from "../../store/wallet.store";
 import { useToggleWatch } from "../../hooks/useWatchlist";
 import { WATCHLIST_CHAIN_ID } from "../../services/watchlist.contract";
+import { appNetwork } from "../../config/network";
 
 interface WatchButtonProps {
   name: string;
@@ -22,6 +23,7 @@ export function WatchButton({ name, fullWidth, disabled = false }: WatchButtonPr
   const connectWallet = useWalletStore((state) => state.connect);
   const isConnecting = useWalletStore((state) => state.isConnecting);
   const chainId = useWalletStore((state) => state.chainId);
+  const requiredChainLabel = appNetwork.label;
 
   const { watch, unwatch, isPending, isWatching } = useToggleWatch(name);
   const isOnRequiredChain = useMemo(() => {
@@ -55,7 +57,7 @@ export function WatchButton({ name, fullWidth, disabled = false }: WatchButtonPr
     }
 
     if (!isOnRequiredChain) {
-      addToast({ variant: "error", message: "Switch to Base Sepolia to manage your watchlist" });
+      addToast({ variant: "error", message: `Switch to ${requiredChainLabel} to manage your watchlist` });
       return;
     }
 

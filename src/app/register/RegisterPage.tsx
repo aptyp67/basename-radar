@@ -11,6 +11,7 @@ import { availabilityCopy, formatReason, formatWei } from "../../lib/format";
 import { useWalletStore } from "../../store/wallet.store";
 import { useUIStore } from "../../store/ui.store";
 import { useRegisterWithFee } from "../../hooks/useRegisterWithFee";
+import { appNetwork } from "../../config/network";
 import {
   REGISTER_WITH_FEE_BPS,
   REGISTER_WITH_FEE_CHAIN_ID,
@@ -24,7 +25,8 @@ const ETH_IN_WEI = 1_000_000_000_000_000_000n;
 const ETH_TO_USD = 4000;
 const REQUIRED_CHAIN_HEX = `0x${REGISTER_WITH_FEE_CHAIN_ID.toString(16)}`;
 const WRAPPER_FEE_PERCENT = `${(Number(REGISTER_WITH_FEE_BPS) / 100).toFixed(2)}%`;
-const BASESCAN_TX_URL = "https://sepolia.basescan.org/tx/";
+const BASESCAN_TX_URL = appNetwork.explorerTxUrl;
+const REQUIRED_CHAIN_LABEL = appNetwork.label;
 
 const AVAILABILITY_TONE = {
   available: "success" as const,
@@ -112,7 +114,7 @@ export function RegisterPage() {
       return;
     }
     if (!isOnRequiredChain) {
-      addToast({ variant: "error", message: "Switch to Base Sepolia to register" });
+      addToast({ variant: "error", message: `Switch to ${REQUIRED_CHAIN_LABEL} to register` });
       return;
     }
     if (!isAvailable) {
@@ -260,7 +262,7 @@ export function RegisterPage() {
                     disabled={disableSwitch}
                     fullWidth
                   >
-                    {isSwitchingChain ? "Switching…" : "Switch to Base Sepolia"}
+                    {isSwitchingChain ? "Switching…" : `Switch to ${REQUIRED_CHAIN_LABEL}`}
                   </Button>
                 )}
 

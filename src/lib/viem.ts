@@ -1,27 +1,32 @@
 import { HttpRequestError, createPublicClient, http } from "viem";
-import { base } from "viem/chains";
+import { appNetwork, NETWORKS } from "../config/network";
 
-const FALLBACK_RPC_URLS = [
-  import.meta.env.VITE_BASE_RPC,
-  "https://mainnet.base.org",
-  "https://developer-access-mainnet.base.org",
-  "https://base-rpc.publicnode.com",
-  "https://base.gateway.tenderly.co",
-  "https://base.blockpi.network/v1/rpc/public",
-  "https://base.meowrpc.com",
-  "https://base.llamarpc.com",
-  "https://1rpc.io/base",
-].filter((url): url is string => typeof url === "string" && url.length > 0);
+const RPC_FALLBACKS = {
+  mainnet: [
+    "https://mainnet.base.org",
+    "https://developer-access-mainnet.base.org",
+    "https://base-rpc.publicnode.com",
+    "https://base.gateway.tenderly.co",
+    "https://base.blockpi.network/v1/rpc/public",
+    "https://base.meowrpc.com",
+    "https://base.llamarpc.com",
+    "https://1rpc.io/base",
+  ],
+  sepolia: ["https://sepolia.base.org"],
+} as const satisfies Record<keyof typeof NETWORKS, readonly string[]>;
+
+const FALLBACK_RPC_URLS = [appNetwork.rpcUrl, ...RPC_FALLBACKS[appNetwork.key]]
+  .filter((url): url is string => typeof url === "string" && url.length > 0);
 
 const uniqueRpcUrls = Array.from(new Set(FALLBACK_RPC_URLS));
 
-const createBaseClient = (url: string) =>
+const createNetworkClient = (url: string) =>
   createPublicClient({
-    chain: base,
+    chain: appNetwork.chain,
     transport: http(url, { retryCount: 0 }),
   });
 
-type BasePublicClient = ReturnType<typeof createBaseClient>;
+type BasePublicClient = ReturnType<typeof createNetworkClient>;
 
 interface RpcEndpointState {
   client: BasePublicClient;
@@ -32,7 +37,7 @@ interface RpcEndpointState {
 }
 
 const rpcStates: RpcEndpointState[] = uniqueRpcUrls.map((url, order) => ({
-  client: createBaseClient(url),
+  client: createNetworkClient(url),
   url,
   failureStreak: 0,
   penaltyUntil: 0,
@@ -40,7 +45,7 @@ const rpcStates: RpcEndpointState[] = uniqueRpcUrls.map((url, order) => ({
 }));
 
 export const publicClient =
-  rpcStates[0]?.client ?? createBaseClient("https://mainnet.base.org");
+  rpcStates[0]?.client ?? createNetworkClient(appNetwork.rpcUrl);
 
 const MAX_PARALLEL_REQUESTS = 2;
 const RATE_LIMIT_DELAY_MS = 15_000;
@@ -146,7 +151,7 @@ export async function withBaseRpcFallback<T>(
   operation: (client: BasePublicClient, url: string) => Promise<T>
 ): Promise<T> {
   if (rpcStates.length === 0) {
-    return operation(publicClient, "https://mainnet.base.org");
+    return operation(publicClient, appNetwork.rpcUrl);
   }
 
   const maxPerBatch = Math.min(MAX_PARALLEL_REQUESTS, rpcStates.length);
@@ -179,5 +184,5 @@ export async function withBaseRpcFallback<T>(
   if (lastError !== undefined) {
     throw new Error(String(lastError));
   }
-  throw new Error("All Base RPC endpoints failed");
+  throw new Error(`All ${appNetwork.label} RPC endpoints failed`);
 }

@@ -7,7 +7,7 @@ import {
   REGISTER_WITH_FEE_BPS,
   REGISTER_WITH_FEE_CHAIN_ID,
   REGISTRAR_CONTROLLER_ABI,
-  REGISTRAR_CONTROLLER_ADDRESSES,
+  REGISTRAR_CONTROLLER_ADDRESS,
   SECONDS_PER_YEAR,
   calculateTotalWithFee,
 } from "../services/registerWithFee.contract";
@@ -61,8 +61,8 @@ export function useRegisterWithFee() {
         throw new Error("Invalid duration");
       }
 
-      const registrarAddress = REGISTRAR_CONTROLLER_ADDRESSES[REGISTER_WITH_FEE_CHAIN_ID];
-      const wrapperAddress = REGISTER_WITH_FEE_ADDRESS[REGISTER_WITH_FEE_CHAIN_ID];
+      const registrarAddress = REGISTRAR_CONTROLLER_ADDRESS;
+      const wrapperAddress = REGISTER_WITH_FEE_ADDRESS;
 
       setIsRegistering(true);
       try {
