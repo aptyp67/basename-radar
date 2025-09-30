@@ -94,7 +94,7 @@ export function useRegisterWithFee() {
           address: wrapperAddress,
           abi: REGISTER_WITH_FEE_ABI,
           functionName: "computeFee",
-          args: [total],
+          args: [registrarValue],
         });
 
         if (computedFee !== fee) {

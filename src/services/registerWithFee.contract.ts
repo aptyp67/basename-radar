@@ -11,7 +11,7 @@ export const REGISTER_WITH_FEE_ABI = parseAbi([
   "function registrar() view returns (address)",
   "function feeRecipient() view returns (address)",
   "function feeBps() view returns (uint96)",
-  "function computeFee(uint256 totalValue) view returns (uint256)",
+  "function computeFee(uint256 registrarValue) view returns (uint256)",
   "function registerSimpleWithFee(string name, address owner, uint256 duration, uint256 registrarValue) payable",
   "function registerWithFee((string name,address owner,uint256 duration,address resolver,bytes[] data,bool reverseRecord) req, uint256 registrarValue) payable",
 ]);
@@ -32,26 +32,12 @@ export function calculateTotalWithFee(
   if (registrarValue <= 0n) {
     return { total: 0n, fee: 0n };
   }
-  if (feeBps < 0n || feeBps >= BPS_DENOMINATOR) {
+  if (feeBps < 0n || feeBps > BPS_DENOMINATOR) {
     throw new Error("Invalid fee basis points");
   }
 
-  const denominator = BPS_DENOMINATOR - feeBps;
-  let total = (registrarValue * BPS_DENOMINATOR + (denominator - 1n)) / denominator;
-  let fee = (total * feeBps) / BPS_DENOMINATOR;
-  let forwarded = total - fee;
-
-  while (forwarded > registrarValue) {
-    total -= 1n;
-    fee = (total * feeBps) / BPS_DENOMINATOR;
-    forwarded = total - fee;
-  }
-
-  while (forwarded < registrarValue) {
-    total += 1n;
-    fee = (total * feeBps) / BPS_DENOMINATOR;
-    forwarded = total - fee;
-  }
+  const fee = (registrarValue * feeBps) / BPS_DENOMINATOR;
+  const total = registrarValue + fee;
 
   return { total, fee };
 }
