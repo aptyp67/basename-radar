@@ -18,7 +18,7 @@ const NETWORKS: Record<NetworkKey, NetworkDetails> = {
     label: "Base",
     chain: base,
     defaultRpcUrl: "https://mainnet.base.org",
-    registerWithFeeAddress: "0x00C09F15B6fBD29c239cec4b3A222098A083fbB3",
+    registerWithFeeAddress: "0xe4c9C22A77FB90D3dEFc413E9f8848216476313d",
     registrarControllerAddress: "0x4cCb0BB02FCABA27e82a56646E81d8c5bC4119a5",
     watchlistAddress: "0xD047F2e9e62C1D76787b3D55F9cB363b4BD54b6f",
     explorerTxUrl: "https://basescan.org/tx/",
