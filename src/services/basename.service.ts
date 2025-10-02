@@ -7,7 +7,7 @@ import type {
   NameKind,
 } from "../types/basename";
 import { withBaseRpcFallback } from "../lib/viem";
-import { REGISTRAR_CONTROLLER_ADDRESS } from "./registerWithFee.contract";
+import { REGISTRAR_CONTROLLER_ADDRESS, toRegistrarValue } from "./registerWithFee.contract";
 import { words as rawWords } from "../assets/words";
 
 interface RegisterIntentResponse {
@@ -31,7 +31,7 @@ const UNIQUE_WORDS = Array.from(
 );
 
 const nameRegex = /^[a-z0-9-]{3,50}$/;
-const DEFAULT_RENTAL_DURATION = 31_536_000n; // 365 days in seconds
+const DEFAULT_RENTAL_DURATION = 31_557_600n; // 365.25 days in seconds
 const registrarControllerAbi = [
   {
     type: "function",
@@ -42,7 +42,7 @@ const registrarControllerAbi = [
   },
   {
     type: "function",
-    name: "rentPrice",
+    name: "registerPrice",
     stateMutability: "view",
     inputs: [
       { name: "name", type: "string" },
@@ -244,11 +244,12 @@ class BasenameService {
             client.readContract({
               address: REGISTRAR_CONTROLLER_ADDRESS,
               abi: registrarControllerAbi,
-              functionName: "rentPrice",
+              functionName: "registerPrice",
               args: [normalized, DEFAULT_RENTAL_DURATION],
             })
           );
-          priceWei = price.toString();
+          const registrarValue = toRegistrarValue(price);
+          priceWei = registrarValue.toString();
         } catch (priceError) {
           console.error("Failed to fetch rent price", priceError);
         }

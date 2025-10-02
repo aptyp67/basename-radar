@@ -11,17 +11,16 @@ export const REGISTER_WITH_FEE_ABI = parseAbi([
   "function registrar() view returns (address)",
   "function feeRecipient() view returns (address)",
   "function feeBps() view returns (uint96)",
-  "function computeFee(uint256 registrarValue) view returns (uint256)",
-  "function registerSimpleWithFee(string name, address owner, uint256 duration, uint256 registrarValue) payable",
-  "function registerWithFee((string name,address owner,uint256 duration,address resolver,bytes[] data,bool reverseRecord) req, uint256 registrarValue) payable",
+  "function computeFee(uint256 price) view returns (uint256)",
+  "function registerSimpleWithFee(string name, address owner, uint256 duration) payable",
 ]);
 
 export const REGISTRAR_CONTROLLER_ABI = parseAbi([
   "function available(string name) view returns (bool)",
-  "function rentPrice(string name, uint256 duration) view returns (uint256)",
+  "function registerPrice(string name, uint256 duration) view returns (uint256)",
 ]);
 
-export const SECONDS_PER_YEAR = 31_536_000n;
+export const SECONDS_PER_YEAR = 31_557_600n;
 export const BPS_DENOMINATOR = 10_000n;
 export const REGISTER_WITH_FEE_BPS = 10n;
 
@@ -40,4 +39,31 @@ export function calculateTotalWithFee(
   const total = registrarValue + fee;
 
   return { total, fee };
+}
+
+export type RegisterPriceResult = bigint | { base: bigint; premium: bigint } | readonly [bigint, bigint];
+
+function isTuple(value: RegisterPriceResult): value is readonly [bigint, bigint] {
+  return Array.isArray(value);
+}
+
+function isStruct(value: RegisterPriceResult): value is { base: bigint; premium: bigint } {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+export function toRegistrarValue(result: RegisterPriceResult): bigint {
+  if (typeof result === "bigint") {
+    return result;
+  }
+
+  if (isTuple(result)) {
+    const [base, premium] = result;
+    return (base ?? 0n) + (premium ?? 0n);
+  }
+
+  if (isStruct(result)) {
+    return (result.base ?? 0n) + (result.premium ?? 0n);
+  }
+
+  throw new Error("Unsupported register price result shape");
 }

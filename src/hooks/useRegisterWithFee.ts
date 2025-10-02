@@ -10,6 +10,7 @@ import {
   REGISTRAR_CONTROLLER_ADDRESS,
   SECONDS_PER_YEAR,
   calculateTotalWithFee,
+  toRegistrarValue,
 } from "../services/registerWithFee.contract";
 
 interface RegisterParams {
@@ -77,14 +78,16 @@ export function useRegisterWithFee() {
           throw new Error("Name is no longer available");
         }
 
-        const registrarValue = await publicClient.readContract({
+        const rentPriceResult = await publicClient.readContract({
           address: registrarAddress,
           abi: REGISTRAR_CONTROLLER_ABI,
-          functionName: "rentPrice",
+          functionName: "registerPrice",
           args: [normalized, durationSeconds],
         });
 
-        if (typeof registrarValue !== "bigint" || registrarValue <= 0n) {
+        const registrarValue = toRegistrarValue(rentPriceResult);
+
+        if (registrarValue <= 0n) {
           throw new Error("Could not resolve rent price");
         }
 
@@ -105,7 +108,7 @@ export function useRegisterWithFee() {
           address: wrapperAddress,
           abi: REGISTER_WITH_FEE_ABI,
           functionName: "registerSimpleWithFee",
-          args: [normalized, address, durationSeconds, registrarValue],
+          args: [normalized, address, durationSeconds],
           chainId: REGISTER_WITH_FEE_CHAIN_ID,
           account: address,
           value: total,
