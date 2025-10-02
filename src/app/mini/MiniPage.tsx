@@ -10,12 +10,10 @@ export function MiniPage() {
   const lengths = useFiltersStore((state) => state.lengths);
   const anyLength = useFiltersStore((state) => state.anyLength);
   const kinds = useFiltersStore((state) => state.kinds);
-  const sort = useFiltersStore((state) => state.sort);
-  const sortDirection = useFiltersStore((state) => state.sortDirection);
 
   const filters = useMemo(
-    () => ({ lengths, anyLength, kinds, sort, sortDirection }),
-    [lengths, anyLength, kinds, sort, sortDirection]
+    () => ({ lengths, anyLength, kinds }),
+    [lengths, anyLength, kinds]
   );
 
   const { items, isLoading, error, refresh } = useCandidates(filters, 18);
@@ -31,7 +29,13 @@ export function MiniPage() {
         <FiltersBar />
       </div>
       <div className={styles.miniList}>
-        <CandidatesList items={items} isLoading={isLoading} error={error} onRetry={refresh} />
+        <CandidatesList
+          items={items}
+          isLoading={isLoading}
+          error={error}
+          onRetry={refresh}
+          onGenerateMore={refresh}
+        />
       </div>
     </main>
   );

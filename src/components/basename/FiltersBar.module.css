@@ -1,84 +1,167 @@
-
 .wrapper {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.85rem;
-  padding: 1.05rem 1.25rem;
-  border-radius: 16px;
-  border: 1px solid var(--border-subtle);
-  background: rgba(15, 16, 24, 0.82);
-}
-
-.group {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 1.25rem;
+  padding: 1.2rem 1.4rem;
+  border-radius: 20px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(15, 16, 24, 0.82);
+  backdrop-filter: blur(14px);
+}
+
+.cards {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  align-items: stretch;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.lengthCard {
+  min-height: 100%;
+}
+
+.cardHeading {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
 }
 
 .label {
-  font-size: 0.82rem;
-  letter-spacing: 0.02em;
-  text-transform: none;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--text-secondary);
   font-weight: 600;
 }
 
-.controls {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+
+.lengthGrid {
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  justify-content: center;
 }
 
-.controlsInline {
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  padding-bottom: 0.1rem;
+.segmentGrid {
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  justify-content: center;
 }
 
-.toggleButton {
-  min-height: 44px;
-  padding: 0.4rem 0.95rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
+.segmentButton {
+  min-height: 38px;
+  padding: 0.32rem 0.88rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
   color: var(--text-secondary);
-  font-size: 0.95rem;
+  font-size: 0.94rem;
+  font-weight: 600;
   letter-spacing: 0.02em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-transform: none;
   transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  gap: 0.25rem;
-  white-space: nowrap;
 }
 
-.toggleButton:hover {
-  border-color: rgba(255, 255, 255, 0.18);
+.segmentButton:hover {
+  border-color: rgba(255, 255, 255, 0.22);
   color: var(--text-primary);
 }
 
-.toggleButtonActive {
+.segmentButtonActive {
   border-color: rgba(45, 183, 255, 0.55);
   background: rgba(45, 183, 255, 0.16);
   color: var(--brand-strong);
 }
 
-.toggleIconButton {
-  min-width: 44px;
-  padding: 0.4rem;
-  font-size: 1.05rem;
-}
-
-.actions {
-  display: flex;
-  justify-content: flex-start;
+.ctaBar {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  justify-content: end;
   align-items: center;
-  gap: 0.6rem;
+  width: min(100%, 360px);
+  margin-left: auto;
 }
 
-.actions button {
-  min-width: 96px;
+.generateButton {
+  min-width: 0;
+  width: 100%;
+}
+
+.resetButton {
+  min-width: 0;
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .wrapper {
+    padding: 1rem;
+  }
+
+  .card {
+    padding: 0.9rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .lengthGrid {
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  }
+
+  .segmentGrid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+
+  .ctaBar {
+    width: 100%;
+  }
+}
+
+@media (max-width: 620px) {
+  .ctaBar {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    width: 100%;
+  }
+
+  .generateButton,
+  .resetButton {
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .lengthGrid {
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  }
+
+  .segmentGrid {
+    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  }
 }

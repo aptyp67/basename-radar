@@ -270,27 +270,6 @@
   color: var(--text-secondary);
 }
 
-.footerNote {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  align-items: center;
-  font-size: 0.82rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-}
-
-.footerLink {
-  color: var(--brand-strong);
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.footerLink:hover {
-  color: var(--brand);
-}
-
 @media (max-width: 900px) {
   .page {
     padding: 3rem 1.25rem 4rem;

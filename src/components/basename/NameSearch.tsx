@@ -3,10 +3,11 @@ import type { ChangeEvent, FormEvent } from "react";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Badge } from "../ui/Badge";
-import { availabilityCopy, formatWei } from "../../lib/format";
+import { availabilityCopy, formatUsd, formatWei } from "../../lib/format";
 import { useNameCheck } from "../../hooks/useNameCheck";
 import { useUIStore } from "../../store/ui.store";
 import styles from "./NameSearch.module.css";
+import { useNavigate } from "react-router-dom";
 
 interface NameSearchProps {
   autoFocus?: boolean;
@@ -14,8 +15,10 @@ interface NameSearchProps {
 
 export function NameSearch({ autoFocus }: NameSearchProps) {
   const [value, setValue] = useState("");
-  const { status, availability, priceWei, error, checkName } = useNameCheck();
+  const { status, availability, priceWei, error, checkName, lastName } = useNameCheck();
   const addToast = useUIStore((state) => state.addToast);
+  const trackEvent = useUIStore((state) => state.trackEvent);
+  const navigate = useNavigate();
   const lastInvalidNoticeRef = useRef(0);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
@@ -40,6 +43,23 @@ export function NameSearch({ autoFocus }: NameSearchProps) {
   };
 
   const tone = availability === "available" ? "success" : availability === "taken" ? "danger" : "muted";
+  const priceWeiValue = priceWei ?? null;
+  const priceDisplay = priceWeiValue ? formatWei(priceWeiValue) : null;
+  const priceUsdDisplay = priceWeiValue ? formatUsd(priceWeiValue) : null;
+  const canOpenRegister = status === "success" && !!lastName;
+
+  const handleOpenRegister = () => {
+    if (!lastName) {
+      return;
+    }
+    trackEvent("searchRegisterClicks");
+    navigate(`/register/${encodeURIComponent(lastName)}`, {
+      state: {
+        priceWei,
+        availability,
+      },
+    });
+  };
 
   return (
     <section className={styles.wrapper} aria-label="Search basenames">
@@ -47,7 +67,7 @@ export function NameSearch({ autoFocus }: NameSearchProps) {
         <Input
           autoFocus={autoFocus}
           className={styles.input}
-          placeholder="Search a basename you love…"
+          placeholder="Search a name you love…"
           value={value}
           onChange={handleChange}
           minLength={3}
@@ -62,9 +82,19 @@ export function NameSearch({ autoFocus }: NameSearchProps) {
       <div className={styles.statusRow}>
         <Badge tone={tone}>{availabilityCopy(availability)}</Badge>
         {status === "loading" && <span className={styles.spinner} aria-hidden="true" />}
-        {status === "success" && <strong>{formatWei(priceWei)}</strong>}
+        {status === "success" && priceDisplay && (
+          <strong>
+            {priceDisplay}
+            {priceUsdDisplay && <span className={styles.statusMeta}> (≈ ${priceUsdDisplay})</span>}
+          </strong>
+        )}
         {status === "error" && error && <span>{error}</span>}
         {status === "idle" && <span className={styles.hint}>Names support lowercase letters, numbers, single dash.</span>}
+        {canOpenRegister && (
+          <Button type="button" size="sm" variant="secondary" className={styles.registerButton} onClick={handleOpenRegister}>
+            Open register
+          </Button>
+        )}
       </div>
     </section>
   );

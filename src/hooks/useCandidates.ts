@@ -18,11 +18,8 @@ export function useCandidates(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [shuffleToken, setShuffleToken] = useState(() => Date.now());
-  const [orderMode, setOrderMode] = useState<"random" | "sorted">("random");
   const setApiLatency = useUIStore((state) => state.setApiLatency);
-  const { lengths, anyLength, kinds, sort, sortDirection } = filters;
-  const previousSortRef = useRef(sort);
-  const previousSortDirectionRef = useRef(sortDirection);
+  const { lengths, anyLength, kinds } = filters;
   const previousFiltersRef = useRef({ lengths, anyLength, kinds });
 
   useEffect(() => {
@@ -58,27 +55,17 @@ export function useCandidates(
   }, [setApiLatency]);
 
   useEffect(() => {
-    const sortChanged = previousSortRef.current !== sort;
-    const directionChanged = previousSortDirectionRef.current !== sortDirection;
-    if (sortChanged || directionChanged) {
-      previousSortRef.current = sort;
-      previousSortDirectionRef.current = sortDirection;
-      setOrderMode("sorted");
-    }
-  }, [sort, sortDirection]);
-
-  useEffect(() => {
     const prev = previousFiltersRef.current;
     const lengthChanged =
       prev.anyLength !== anyLength ||
       prev.lengths.length !== lengths.length ||
       prev.lengths.some((value, index) => value !== lengths[index]);
     const kindsChanged = prev.kinds !== kinds;
-    previousFiltersRef.current = { lengths, anyLength, kinds };
-    if (orderMode === "random" && (lengthChanged || kindsChanged)) {
+    if (lengthChanged || kindsChanged) {
+      previousFiltersRef.current = { lengths, anyLength, kinds };
       setShuffleToken(Date.now());
     }
-  }, [lengths, anyLength, kinds, orderMode]);
+  }, [lengths, anyLength, kinds]);
 
   const filteredItems = useMemo(() => {
     if (allItems.length === 0) {
@@ -102,11 +89,8 @@ export function useCandidates(
     if (filteredItems.length === 0) {
       return [];
     }
-    if (orderMode === "random") {
-      return shuffleWithSeed(filteredItems, shuffleToken);
-    }
-    return basenameService.sortCandidates(filteredItems, sort, sortDirection);
-  }, [filteredItems, orderMode, shuffleToken, sort, sortDirection]);
+    return shuffleWithSeed(filteredItems, shuffleToken);
+  }, [filteredItems, shuffleToken]);
 
   const limitedItems = useMemo(() => {
     if (!limit || limit >= orderedItems.length) {
@@ -120,7 +104,6 @@ export function useCandidates(
     isLoading: loading,
     error,
     refresh: () => {
-      setOrderMode("random");
       setShuffleToken(Date.now());
     },
   };

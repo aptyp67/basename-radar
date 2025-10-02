@@ -7,21 +7,20 @@ import { useCandidates } from "../../hooks/useCandidates";
 import { Pagination } from "../../components/ui/Pagination";
 import styles from "./HomePage.module.css";
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 12;
 const LIST_SCROLL_OFFSET_PX = 24;
 
 export function HomePage() {
   const lengths = useFiltersStore((state) => state.lengths);
   const anyLength = useFiltersStore((state) => state.anyLength);
   const kinds = useFiltersStore((state) => state.kinds);
-  const sort = useFiltersStore((state) => state.sort);
-  const sortDirection = useFiltersStore((state) => state.sortDirection);
   const [page, setPage] = useState(1);
   const listContainerRef = useRef<HTMLDivElement>(null);
+  const filtersSignatureRef = useRef<string | null>(null);
 
   const filters = useMemo(
-    () => ({ lengths, anyLength, kinds, sort, sortDirection }),
-    [lengths, anyLength, kinds, sort, sortDirection]
+    () => ({ lengths, anyLength, kinds }),
+    [lengths, anyLength, kinds]
   );
 
   const {
@@ -52,8 +51,18 @@ export function HomePage() {
   }, []);
 
   useEffect(() => {
+    const signature = JSON.stringify({ lengths, anyLength, kinds });
+    if (filtersSignatureRef.current === null) {
+      filtersSignatureRef.current = signature;
+      return;
+    }
+    if (filtersSignatureRef.current === signature) {
+      return;
+    }
+    filtersSignatureRef.current = signature;
     setPage(1);
-  }, [lengths, anyLength, kinds, sort, sortDirection]);
+    scrollToListTop();
+  }, [lengths, anyLength, kinds, scrollToListTop]);
 
   useEffect(() => {
     const pages = Math.ceil(candidates.length / ITEMS_PER_PAGE);
@@ -115,6 +124,7 @@ export function HomePage() {
               isLoading={isLoading}
               error={error}
               onRetry={refresh}
+              onGenerateMore={handleShuffle}
             />
           </div>
           {shouldShowPagination && (

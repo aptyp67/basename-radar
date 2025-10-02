@@ -12,6 +12,10 @@
   align-content: start;
 }
 
+.gridWide {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
 .emptyState {
   padding: 1.5rem;
   border-radius: 16px;
@@ -43,6 +47,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
   color: var(--text-secondary);
   font-size: 0.9rem;
 }
@@ -50,22 +56,5 @@
 .headerRow strong {
   color: var(--text-primary);
   font-size: 1.05rem;
-  letter-spacing: 0.02em;
-}
-
-.headerMetric {
-  display: flex;
-  align-items: baseline;
-  gap: 0.35rem;
-  text-transform: none;
-  letter-spacing: 0.02em;
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
-
-.headerMetricValue {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--text-primary);
   letter-spacing: 0.02em;
 }

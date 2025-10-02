@@ -38,6 +38,17 @@
   white-space: nowrap;
 }
 
+.statusMeta {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-left: 0.35rem;
+  letter-spacing: 0.02em;
+}
+
+.registerButton {
+  margin-left: auto;
+}
+
 .hint {
   color: var(--text-faint);
   font-size: 0.85rem;

@@ -130,28 +130,6 @@ function buildReasons(name: string): string[] {
   return Array.from(reasons);
 }
 
-function computeScore(name: string, kinds: NameKind[]): number {
-  let score = 0;
-  if (name.length === 3) {
-    score += 40;
-  } else if (name.length === 4) {
-    score += 20;
-  }
-  if (kinds.includes("word")) {
-    score += 30;
-  }
-  if (kinds.includes("palindrome")) {
-    score += 15;
-  }
-  if (/\d{3,}/.test(name)) {
-    score -= 20;
-  }
-  if (score > 100) {
-    return 100;
-  }
-  return Math.max(score, 0);
-}
-
 const MOCK_DATA: BasenameCandidate[] = UNIQUE_WORDS.map((name) => {
   const normalized = name.toLowerCase();
   const length = normalized.length;
@@ -163,7 +141,6 @@ const MOCK_DATA: BasenameCandidate[] = UNIQUE_WORDS.map((name) => {
     name: normalized,
     length,
     kind: kinds,
-    score: computeScore(normalized, kinds),
     availability,
     priceWei,
     reasons: buildReasons(normalized),
@@ -173,14 +150,6 @@ const MOCK_DATA: BasenameCandidate[] = UNIQUE_WORDS.map((name) => {
 class BasenameService {
   async getAllCandidates(): Promise<CandidatesResponse> {
     return { items: [...MOCK_DATA], nextCursor: undefined };
-  }
-
-  sortCandidates(
-    items: BasenameCandidate[],
-    sort: CandidateFilters["sort"],
-    direction: CandidateFilters["sortDirection"]
-  ): BasenameCandidate[] {
-    return [...items].sort((a, b) => this.sortComparer(a, b, sort, direction));
   }
 
   async getCandidates(
@@ -201,13 +170,8 @@ class BasenameService {
       return true;
     });
 
-    const sorted = this.sortCandidates(
-      filtered,
-      filters.sort,
-      filters.sortDirection
-    );
     return {
-      items: limit ? sorted.slice(0, limit) : sorted,
+      items: limit ? filtered.slice(0, limit) : filtered,
       nextCursor: undefined,
     };
   }
@@ -268,21 +232,6 @@ class BasenameService {
     return { ok: true, checkoutUrl };
   }
 
-  private sortComparer(
-    a: BasenameCandidate,
-    b: BasenameCandidate,
-    sort: CandidateFilters["sort"],
-    direction: CandidateFilters["sortDirection"]
-  ): number {
-    const isAscending = direction === "asc";
-    if (sort === "alpha") {
-      return isAscending
-        ? a.name.localeCompare(b.name)
-        : b.name.localeCompare(a.name);
-    }
-
-    return isAscending ? a.score - b.score : b.score - a.score;
-  }
 }
 
 export const basenameService = new BasenameService();

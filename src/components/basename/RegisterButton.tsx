@@ -7,7 +7,6 @@ interface RegisterButtonProps {
   name: string;
   priceWei?: string;
   availability: Availability;
-  score: number;
   reasons: string[];
   kinds: NameKind[];
   length: number;
@@ -19,7 +18,6 @@ export function RegisterButton({
   name,
   priceWei,
   availability,
-  score,
   reasons,
   kinds,
   length,
@@ -35,7 +33,6 @@ export function RegisterButton({
       state: {
         priceWei,
         availability,
-        score,
         reasons,
         kinds,
         length,

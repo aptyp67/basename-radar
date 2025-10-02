@@ -1,19 +1,15 @@
 import { create } from "zustand";
 import type { CandidateFilters, NameKind } from "../types/basename";
 
-export const LENGTH_OPTIONS = [3, 4, 5] as const;
+export const LENGTH_OPTIONS = [3, 4, 5, 6, 7, 8, 9] as const;
 export const DEFAULT_KINDS: NameKind[] = ["word", "palindrome"];
 
 const DEFAULT_SELECTED_LENGTHS = [3, 4];
 const INITIAL_SELECTED_KINDS: NameKind[] = ["word"];
-const DEFAULT_SORT_DIRECTION: CandidateFilters["sortDirection"] = "asc";
-
 interface FiltersState extends CandidateFilters {
   toggleLength: (length: number) => void;
   setAnyLength: (enabled: boolean) => void;
   toggleKind: (kind: NameKind) => void;
-  setSort: (sort: CandidateFilters["sort"]) => void;
-  toggleSortDirection: () => void;
   reset: () => void;
   isDefault: () => boolean;
 }
@@ -30,16 +26,10 @@ export const useFiltersStore = create<FiltersState>((set, get) => ({
   lengths: [...DEFAULT_SELECTED_LENGTHS],
   anyLength: false,
   kinds: [...INITIAL_SELECTED_KINDS],
-  sort: "score",
-  sortDirection: DEFAULT_SORT_DIRECTION,
   toggleLength: (length) =>
     set((state) => {
       if (state.anyLength) {
-        const nextLengths = new Set(DEFAULT_SELECTED_LENGTHS);
-        if (!nextLengths.has(length)) {
-          nextLengths.add(length);
-        }
-        return { anyLength: false, lengths: sortNumeric(nextLengths) };
+        return { anyLength: false, lengths: [length] };
       }
 
       const next = new Set(state.lengths);
@@ -61,7 +51,7 @@ export const useFiltersStore = create<FiltersState>((set, get) => ({
       if (!state.anyLength) {
         return state;
       }
-      return { anyLength: false, lengths: [...DEFAULT_SELECTED_LENGTHS] };
+      return { anyLength: false };
     }),
   toggleKind: (kind) =>
     set((state) => {
@@ -70,34 +60,18 @@ export const useFiltersStore = create<FiltersState>((set, get) => ({
       }
       return { kinds: [kind] };
     }),
-  setSort: (sort) =>
-    set((state) => {
-      if (state.sort === sort) {
-        return { sort };
-      }
-      return {
-        sort,
-        sortDirection: DEFAULT_SORT_DIRECTION,
-      };
-    }),
-  toggleSortDirection: () =>
-    set((state) => ({ sortDirection: state.sortDirection === "asc" ? "desc" : "asc" })),
   reset: () =>
     set(() => ({
       lengths: [...DEFAULT_SELECTED_LENGTHS],
       anyLength: false,
       kinds: [...INITIAL_SELECTED_KINDS],
-      sort: "score",
-      sortDirection: DEFAULT_SORT_DIRECTION,
     })),
   isDefault: () => {
     const state = get();
     return (
       state.anyLength === false &&
       arraysEqual(state.lengths, DEFAULT_SELECTED_LENGTHS) &&
-      arraysEqual(state.kinds, INITIAL_SELECTED_KINDS) &&
-      state.sort === "score" &&
-      state.sortDirection === DEFAULT_SORT_DIRECTION
+      arraysEqual(state.kinds, INITIAL_SELECTED_KINDS)
     );
   },
 }));

@@ -15,7 +15,6 @@ interface Metrics {
   shuffleClicks: number;
   lastApiLatencyMs: number | null;
   renderedCards: number;
-  averageScore: number;
 }
 
 interface UIState {
@@ -23,9 +22,9 @@ interface UIState {
   metrics: Metrics;
   addToast: (toast: Omit<ToastItem, "id">) => string;
   dismissToast: (id: string) => void;
-  trackEvent: (event: keyof Omit<Metrics, "lastApiLatencyMs" | "renderedCards" | "averageScore">) => void;
+  trackEvent: (event: keyof Omit<Metrics, "lastApiLatencyMs" | "renderedCards">) => void;
   setApiLatency: (ms: number) => void;
-  setDebugSnapshot: (payload: Pick<Metrics, "renderedCards" | "averageScore">) => void;
+  setDebugSnapshot: (payload: Pick<Metrics, "renderedCards">) => void;
 }
 
 let toastIncrement = 0;
@@ -39,7 +38,6 @@ export const useUIStore = create<UIState>((set) => ({
     shuffleClicks: 0,
     lastApiLatencyMs: null,
     renderedCards: 0,
-    averageScore: 0,
   },
   addToast: (toast) => {
     const id = `toast-${toastIncrement += 1}`;
@@ -67,7 +65,6 @@ export const useUIStore = create<UIState>((set) => ({
       metrics: {
         ...state.metrics,
         renderedCards: payload.renderedCards,
-        averageScore: payload.averageScore,
       },
     })),
 }));

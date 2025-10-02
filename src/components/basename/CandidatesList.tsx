@@ -1,4 +1,5 @@
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
+import clsx from "clsx";
 import type { BasenameCandidate } from "../../types/basename";
 import { NameCard } from "./NameCard";
 import { Skeleton } from "../ui/Skeleton";
@@ -12,21 +13,22 @@ interface CandidatesListProps {
   error: string | null;
   onRetry: () => void;
   totalCount?: number;
+  onGenerateMore?: () => void;
 }
 
-export function CandidatesList({ items, isLoading, error, onRetry, totalCount }: CandidatesListProps) {
+export function CandidatesList({
+  items,
+  isLoading,
+  error,
+  onRetry,
+  totalCount,
+  onGenerateMore,
+}: CandidatesListProps) {
   const setDebugSnapshot = useUIStore((state) => state.setDebugSnapshot);
-  const averageScore = useMemo(() => {
-    if (items.length === 0) {
-      return 0;
-    }
-    const total = items.reduce((acc, item) => acc + item.score, 0);
-    return Math.round((total / items.length) * 10) / 10;
-  }, [items]);
 
   useEffect(() => {
-    setDebugSnapshot({ averageScore, renderedCards: items.length });
-  }, [averageScore, items.length, setDebugSnapshot]);
+    setDebugSnapshot({ renderedCards: items.length });
+  }, [items.length, setDebugSnapshot]);
 
   if (isLoading) {
     return (
@@ -50,19 +52,30 @@ export function CandidatesList({ items, isLoading, error, onRetry, totalCount }:
   }
 
   if (items.length === 0) {
-    return <div className={styles.emptyState}>No results. Try expanding filters.</div>;
+    return (
+      <div className={styles.emptyState}>
+        No results. Try expanding filters.
+      </div>
+    );
   }
+
+  const shouldUseWideGrid = items.some((candidate) => candidate.length > 6);
 
   return (
     <div className={styles.wrapper}>
       <div className={styles.headerRow}>
-        <strong>{totalCount ?? items.length} Candidates</strong>
-        <span className={styles.headerMetric}>
-          <span>Avg. Score</span>
-          <span className={styles.headerMetricValue}>{averageScore}</span>
-        </span>
+        <strong>{totalCount ?? items.length} candidates generated</strong>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={onGenerateMore}
+          disabled={isLoading || !onGenerateMore}
+        >
+          Generate more 🤖
+        </Button>
       </div>
-      <div className={styles.grid}>
+      <div className={clsx(styles.grid, shouldUseWideGrid && styles.gridWide)}>
         {items.map((candidate) => (
           <NameCard key={candidate.name} candidate={candidate} />
         ))}

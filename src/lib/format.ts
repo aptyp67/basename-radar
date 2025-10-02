@@ -1,10 +1,23 @@
-const WEI_IN_ETH = 1_000_000_000_000_000_000n;
+export const WEI_IN_ETH = 1_000_000_000_000_000_000n;
+export const USD_PER_ETH = 4000;
 
-export function formatWei(wei?: string): string {
-  if (!wei) {
+function coerceWei(value?: string | bigint | null): bigint | null {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+  try {
+    return typeof value === "bigint" ? value : BigInt(value);
+  } catch (error) {
+    console.warn("Invalid wei value provided", value, error);
+    return null;
+  }
+}
+
+export function formatWei(value?: string | bigint | null): string {
+  const amount = coerceWei(value);
+  if (amount === null) {
     return "—";
   }
-  const amount = BigInt(wei);
   const whole = amount / WEI_IN_ETH;
   const remainder = amount % WEI_IN_ETH;
   if (whole > 0n) {
@@ -14,6 +27,18 @@ export function formatWei(wei?: string): string {
   }
   const milli = Number((amount * 1000n) / WEI_IN_ETH);
   return `${milli} mETH`;
+}
+
+export function formatUsd(value?: string | bigint | null): string {
+  const amount = coerceWei(value);
+  if (amount === null) {
+    return "0.00";
+  }
+  const eth = Number(amount) / Number(WEI_IN_ETH);
+  if (!Number.isFinite(eth)) {
+    return "0.00";
+  }
+  return (eth * USD_PER_ETH).toFixed(2);
 }
 
 export function availabilityCopy(availability: string | null | undefined): string {

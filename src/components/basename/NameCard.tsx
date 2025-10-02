@@ -1,7 +1,7 @@
 import { Badge } from "../ui/Badge";
 import styles from "./NameCard.module.css";
 import type { BasenameCandidate } from "../../types/basename";
-import { formatKinds, formatReason, formatWei, availabilityCopy } from "../../lib/format";
+import { formatKinds, formatReason, formatWei, availabilityCopy, formatUsd } from "../../lib/format";
 import { RegisterButton } from "./RegisterButton";
 import { WatchButton } from "./WatchButton";
 import { useNameAvailability } from "../../hooks/useNameAvailability";
@@ -24,16 +24,23 @@ export function NameCard({ candidate }: NameCardProps) {
   );
   const tone = isChecking ? "muted" : AVAILABILITY_TONE[availability];
   const statusLabel = isChecking ? "Checking…" : availabilityCopy(availability);
+  const priceWeiSource = priceWei ?? candidate.priceWei ?? null;
+  const priceDisplay = formatWei(priceWeiSource);
+  const priceUsdDisplay = priceWeiSource ? formatUsd(priceWeiSource) : null;
   return (
     <article className={styles.card}>
-      <Badge tone={tone} className={styles.statusBadge}>
-        <span className={styles.statusContent}>
-          {isChecking && <span className={styles.statusSpinner} aria-hidden="true" />}
-          {statusLabel}
-        </span>
-      </Badge>
       <header className={styles.header}>
-        <h3 className={styles.name}>{candidate.name}</h3>
+        <div className={styles.titleRow}>
+          <h3 className={styles.name} title={candidate.name}>
+            {candidate.name}
+          </h3>
+          <Badge tone={tone} className={styles.statusBadge}>
+            <span className={styles.statusContent}>
+              {isChecking && <span className={styles.statusSpinner} aria-hidden="true" />}
+              {statusLabel}
+            </span>
+          </Badge>
+        </div>
       </header>
 
       <div className={styles.reasons}>
@@ -48,12 +55,11 @@ export function NameCard({ candidate }: NameCardProps) {
       <div className={styles.metaRow}>
         <div className={styles.metrics}>
           <div className={styles.metric}>
-            <span className={styles.metricLabel}>Score</span>
-            <span className={styles.metricValue}>{candidate.score}</span>
-          </div>
-          <div className={styles.metric}>
             <span className={styles.metricLabel}>Price</span>
-            <span className={styles.metricValue}>{formatWei(priceWei)}</span>
+            <span className={styles.metricValue}>
+              {priceDisplay}
+              {priceUsdDisplay && <span className={styles.metricMeta}>≈ ${priceUsdDisplay}</span>}
+            </span>
           </div>
         </div>
       </div>
@@ -64,7 +70,6 @@ export function NameCard({ candidate }: NameCardProps) {
             name={candidate.name}
             priceWei={priceWei ?? candidate.priceWei}
             availability={availability}
-            score={candidate.score}
             reasons={candidate.reasons}
             kinds={candidate.kind}
             length={candidate.length}

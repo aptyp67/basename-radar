@@ -7,7 +7,7 @@ import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
 import { WatchButton } from "../../components/basename/WatchButton";
 import { useNameAvailability } from "../../hooks/useNameAvailability";
-import { availabilityCopy, formatReason, formatWei } from "../../lib/format";
+import { availabilityCopy, formatReason, formatWei, formatUsd } from "../../lib/format";
 import { useWalletStore } from "../../store/wallet.store";
 import { useUIStore } from "../../store/ui.store";
 import { useRegisterWithFee } from "../../hooks/useRegisterWithFee";
@@ -21,8 +21,6 @@ import type { Availability, NameKind } from "../../types/basename";
 import styles from "./RegisterPage.module.css";
 
 const DEFAULT_PRICE_WEI = 1_000_000_000_000_000n; // 0.001 ETH
-const ETH_IN_WEI = 1_000_000_000_000_000_000n;
-const ETH_TO_USD = 4000;
 const REQUIRED_CHAIN_HEX = `0x${REGISTER_WITH_FEE_CHAIN_ID.toString(16)}`;
 const WRAPPER_FEE_PERCENT = `${(Number(REGISTER_WITH_FEE_BPS) / 100).toFixed(2)}%`;
 const BASESCAN_TX_URL = appNetwork.explorerTxUrl;
@@ -37,7 +35,6 @@ const AVAILABILITY_TONE = {
 interface RegisterLocationState {
   priceWei?: string;
   availability?: Availability;
-  score?: number;
   reasons?: string[];
   kinds?: NameKind[];
   length?: number;
@@ -78,7 +75,6 @@ export function RegisterPage() {
   const availabilityTone = isChecking ? "muted" : AVAILABILITY_TONE[availability];
   const availabilityLabel = (isChecking ? "Checking…" : availabilityCopy(availability)).toUpperCase();
 
-  const score = locationState?.score ?? null;
   const pricePerYearDisplay = formatWei(pricePerYearWei.toString());
   const registrationCostDisplay = formatWei(registrationCostWei.toString());
   const wrapperFeeDisplay = formatWei(wrapperFeeWei.toString());
@@ -183,10 +179,6 @@ export function RegisterPage() {
             </Badge>
           </div>
           <div className={styles.heroMeta}>
-            <div className={styles.metaItem}>
-              <span className={styles.metaLabel}>Score</span>
-              <span className={styles.metaValue}>{score ?? "—"}</span>
-            </div>
             <div className={styles.metaItem}>
               <span className={styles.metaLabel}>Price Per Year</span>
               <span className={styles.metaValue}>{pricePerYearDisplay}</span>
@@ -330,12 +322,6 @@ export function RegisterPage() {
           </div>
         </section>
 
-        <footer className={styles.footerNote}>
-          <span>Unlock your username for free!</span>
-          <Link to="/" className={styles.footerLink}>
-            LEARN MORE
-          </Link>
-        </footer>
       </div>
     </div>
   );
@@ -383,14 +369,6 @@ function formatKindTag(kind: NameKind): string {
     return "PALINDROME";
   }
   return (kind as string).toUpperCase();
-}
-
-function formatUsd(value: bigint): string {
-  const eth = Number(value) / Number(ETH_IN_WEI);
-  if (!Number.isFinite(eth)) {
-    return "0.00";
-  }
-  return (eth * ETH_TO_USD).toFixed(2);
 }
 
 function formatHash(hash: `0x${string}`): string {
