@@ -15,9 +15,9 @@ interface NameSearchProps {
 
 export function NameSearch({ autoFocus }: NameSearchProps) {
   const [value, setValue] = useState("");
-  const { status, availability, priceWei, error, checkName, lastName } = useNameCheck();
+  const { status, availability, priceWei, error, checkName, lastName } =
+    useNameCheck();
   const addToast = useUIStore((state) => state.addToast);
-  const trackEvent = useUIStore((state) => state.trackEvent);
   const navigate = useNavigate();
   const lastInvalidNoticeRef = useRef(0);
 
@@ -34,7 +34,10 @@ export function NameSearch({ autoFocus }: NameSearchProps) {
     if (sanitized !== lowered) {
       const now = Date.now();
       if (now - lastInvalidNoticeRef.current > 1200) {
-        addToast({ variant: "info", message: "Use lowercase letters, numbers, or single dash" });
+        addToast({
+          variant: "info",
+          message: "Use lowercase letters, numbers, or single dash",
+        });
         lastInvalidNoticeRef.current = now;
       }
     }
@@ -42,7 +45,12 @@ export function NameSearch({ autoFocus }: NameSearchProps) {
     setValue(sanitized);
   };
 
-  const tone = availability === "available" ? "success" : availability === "taken" ? "danger" : "muted";
+  const tone =
+    availability === "available"
+      ? "success"
+      : availability === "taken"
+      ? "danger"
+      : "muted";
   const priceWeiValue = priceWei ?? null;
   const priceDisplay = priceWeiValue ? formatWei(priceWeiValue) : null;
   const priceUsdDisplay = priceWeiValue ? formatUsd(priceWeiValue) : null;
@@ -52,7 +60,6 @@ export function NameSearch({ autoFocus }: NameSearchProps) {
     if (!lastName) {
       return;
     }
-    trackEvent("searchRegisterClicks");
     navigate(`/register/${encodeURIComponent(lastName)}`, {
       state: {
         priceWei,
@@ -75,23 +82,42 @@ export function NameSearch({ autoFocus }: NameSearchProps) {
           pattern="[a-z0-9\-]{3,50}"
           title="3-50 chars, lowercase letters, numbers, single dash"
         />
-        <Button type="submit" size="lg" className={styles.submit} disabled={status === "loading"}>
+        <Button
+          type="submit"
+          size="lg"
+          className={styles.submit}
+          disabled={status === "loading"}
+        >
           {status === "loading" ? "Checking…" : "Check"}
         </Button>
       </form>
       <div className={styles.statusRow}>
         <Badge tone={tone}>{availabilityCopy(availability)}</Badge>
-        {status === "loading" && <span className={styles.spinner} aria-hidden="true" />}
+        {status === "loading" && (
+          <span className={styles.spinner} aria-hidden="true" />
+        )}
         {status === "success" && priceDisplay && (
           <strong>
             {priceDisplay}
-            {priceUsdDisplay && <span className={styles.statusMeta}> (≈ ${priceUsdDisplay})</span>}
+            {priceUsdDisplay && (
+              <span className={styles.statusMeta}> (≈ ${priceUsdDisplay})</span>
+            )}
           </strong>
         )}
         {status === "error" && error && <span>{error}</span>}
-        {status === "idle" && <span className={styles.hint}>Names support lowercase letters, numbers, single dash.</span>}
+        {status === "idle" && (
+          <span className={styles.hint}>
+            Names support lowercase letters, numbers, single dash.
+          </span>
+        )}
         {canOpenRegister && (
-          <Button type="button" size="sm" variant="secondary" className={styles.registerButton} onClick={handleOpenRegister}>
+          <Button
+            type="button"
+            size="sm"
+            variant="secondary"
+            className={styles.registerButton}
+            onClick={handleOpenRegister}
+          >
             Open register
           </Button>
         )}
