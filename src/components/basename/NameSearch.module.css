@@ -54,6 +54,11 @@
   font-size: 0.85rem;
 }
 
+.validationError {
+  color: #f87171;
+  font-size: 0.85rem;
+}
+
 .spinner {
   width: 16px;
   height: 16px;

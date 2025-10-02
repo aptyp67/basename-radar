@@ -19,6 +19,13 @@
   transform: none;
 }
 
+.primary:disabled {
+  opacity: 0.85;
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-strong) 100%);
+  border-color: rgba(83, 209, 255, 0.45);
+  color: #02030a;
+}
+
 .button:not(:disabled):hover {
   transform: translateY(-1px);
 }

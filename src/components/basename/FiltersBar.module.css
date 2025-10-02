@@ -49,15 +49,13 @@
 .lengthGrid {
   display: grid;
   gap: 0.45rem;
-  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-  justify-content: center;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .segmentGrid {
   display: grid;
   gap: 0.45rem;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  justify-content: center;
+  grid-template-columns: 1fr;
 }
 
 .segmentButton {
@@ -124,14 +122,6 @@
     grid-template-columns: 1fr;
   }
 
-  .lengthGrid {
-    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-  }
-
-  .segmentGrid {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  }
-
   .ctaBar {
     width: 100%;
   }
@@ -153,15 +143,5 @@
   .generateButton,
   .resetButton {
     width: 100%;
-  }
-}
-
-@media (max-width: 520px) {
-  .lengthGrid {
-    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
-  }
-
-  .segmentGrid {
-    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
   }
 }

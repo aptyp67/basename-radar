@@ -19,11 +19,11 @@ export function useNameCheck() {
 
   const checkName = useCallback(async (name: string) => {
     const trimmed = name.trim().toLowerCase();
-    if (!NAME_REGEX.test(trimmed) || trimmed.includes("--") || trimmed.startsWith("-") || trimmed.endsWith("-")) {
+    if (!NAME_REGEX.test(trimmed) || trimmed.startsWith("-") || trimmed.endsWith("-")) {
       setState({
         status: "error",
         availability: null,
-        error: "Use 3-50 chars, lowercase letters/numbers, no leading/trailing dash or double dash",
+        error: "Use 3-50 chars, lowercase letters/numbers, dash allowed only in the middle",
       });
       return;
     }

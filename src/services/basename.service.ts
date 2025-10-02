@@ -22,13 +22,7 @@ const BASE_PRICE_WEI = {
   6: BigInt("50000000000000000"),
 };
 
-const UNIQUE_WORDS = Array.from(
-  new Set(
-    rawWords
-      .map((word) => word.trim().toLowerCase())
-      .filter((word) => word.length > 0)
-  )
-);
+const NORMALIZED_WORDS = rawWords.map((word) => word.trim().toLowerCase());
 
 const nameRegex = /^[a-z0-9-]{3,50}$/;
 const DEFAULT_RENTAL_DURATION = 31_557_600n; // 365.25 days in seconds
@@ -130,8 +124,8 @@ function buildReasons(name: string): string[] {
   return Array.from(reasons);
 }
 
-const MOCK_DATA: BasenameCandidate[] = UNIQUE_WORDS.map((name) => {
-  const normalized = name.toLowerCase();
+const MOCK_DATA: BasenameCandidate[] = NORMALIZED_WORDS.map((name) => {
+  const normalized = name;
   const length = normalized.length;
   const kinds = detectKinds(normalized);
   const hash = deterministicHash(normalized);
@@ -182,11 +176,7 @@ class BasenameService {
       return { availability: "unknown" };
     }
 
-    if (
-      normalized.includes("--") ||
-      normalized.startsWith("-") ||
-      normalized.endsWith("-")
-    ) {
+    if (normalized.startsWith("-") || normalized.endsWith("-")) {
       return { availability: "unknown" };
     }
 

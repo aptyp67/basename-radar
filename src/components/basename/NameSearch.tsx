@@ -8,6 +8,7 @@ import { useNameCheck } from "../../hooks/useNameCheck";
 import { useUIStore } from "../../store/ui.store";
 import styles from "./NameSearch.module.css";
 import { useNavigate } from "react-router-dom";
+import { getEthBaseLabelError } from "../../lib/validation";
 
 interface NameSearchProps {
   autoFocus?: boolean;
@@ -15,14 +16,41 @@ interface NameSearchProps {
 
 export function NameSearch({ autoFocus }: NameSearchProps) {
   const [value, setValue] = useState("");
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [hasAttempted, setHasAttempted] = useState(false);
   const { status, availability, priceWei, error, checkName, lastName } =
     useNameCheck();
   const addToast = useUIStore((state) => state.addToast);
   const navigate = useNavigate();
   const lastInvalidNoticeRef = useRef(0);
 
+  const describeValidationError = (code: ReturnType<typeof getEthBaseLabelError>) => {
+    switch (code) {
+      case "too-short":
+        return "Name must be at least 3 characters long.";
+      case "invalid-characters":
+        return "Use lowercase letters, numbers, or single dash.";
+      case "contains-dot":
+        return "Dots are not allowed in base names.";
+      case "edge-dash":
+        return "Dash cannot be at the beginning or end.";
+      default:
+        return null;
+    }
+  };
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (status === "loading") {
+      return;
+    }
+    setHasAttempted(true);
+    const errorCode = getEthBaseLabelError(value);
+    if (errorCode) {
+      setValidationError(describeValidationError(errorCode));
+      return;
+    }
+    setValidationError(null);
     checkName(value);
   };
 
@@ -43,6 +71,16 @@ export function NameSearch({ autoFocus }: NameSearchProps) {
     }
 
     setValue(sanitized);
+    if (sanitized.length === 0) {
+      setHasAttempted(false);
+      setValidationError(null);
+      return;
+    }
+
+    if (hasAttempted) {
+      const errorCode = getEthBaseLabelError(sanitized);
+      setValidationError(describeValidationError(errorCode));
+    }
   };
 
   const tone =
@@ -54,7 +92,8 @@ export function NameSearch({ autoFocus }: NameSearchProps) {
   const priceWeiValue = priceWei ?? null;
   const priceDisplay = priceWeiValue ? formatWei(priceWeiValue) : null;
   const priceUsdDisplay = priceWeiValue ? formatUsd(priceWeiValue) : null;
-  const canOpenRegister = status === "success" && !!lastName;
+  const canOpenRegister =
+    status === "success" && availability === "available" && !!lastName;
 
   const handleOpenRegister = () => {
     if (!lastName) {
@@ -105,20 +144,23 @@ export function NameSearch({ autoFocus }: NameSearchProps) {
           </strong>
         )}
         {status === "error" && error && <span>{error}</span>}
-        {status === "idle" && (
+        {status === "idle" && value.length === 0 && (
           <span className={styles.hint}>
             Names support lowercase letters, numbers, single dash.
           </span>
+        )}
+        {validationError && (
+          <span className={styles.validationError}>{validationError}</span>
         )}
         {canOpenRegister && (
           <Button
             type="button"
             size="sm"
-            variant="secondary"
+            variant="success"
             className={styles.registerButton}
             onClick={handleOpenRegister}
           >
-            Open register
+            Register name!
           </Button>
         )}
       </div>

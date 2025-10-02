@@ -4,7 +4,7 @@ import type { CandidateFilters, NameKind } from "../types/basename";
 export const LENGTH_OPTIONS = [3, 4, 5, 6, 7, 8, 9] as const;
 export const DEFAULT_KINDS: NameKind[] = ["word", "palindrome"];
 
-const DEFAULT_SELECTED_LENGTHS = [3, 4];
+const DEFAULT_SELECTED_LENGTHS = [3, 4, 5];
 const INITIAL_SELECTED_KINDS: NameKind[] = ["word"];
 interface FiltersState extends CandidateFilters {
   toggleLength: (length: number) => void;

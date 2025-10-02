@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { Badge } from "../ui/Badge";
 import styles from "./NameCard.module.css";
 import type { BasenameCandidate } from "../../types/basename";
@@ -25,8 +26,10 @@ export function NameCard({ candidate }: NameCardProps) {
   const tone = isChecking ? "muted" : AVAILABILITY_TONE[availability];
   const statusLabel = isChecking ? "Checking…" : availabilityCopy(availability);
   const priceWeiSource = priceWei ?? candidate.priceWei ?? null;
-  const priceDisplay = formatWei(priceWeiSource);
+  const priceDisplay = priceWeiSource ? formatWei(priceWeiSource) : null;
   const priceUsdDisplay = priceWeiSource ? formatUsd(priceWeiSource) : null;
+  const shouldShowPrice = availability !== "taken" && priceDisplay !== null;
+  const metricClassName = clsx(styles.metric, !shouldShowPrice && styles.metricPlaceholder);
   return (
     <article className={styles.card}>
       <header className={styles.header}>
@@ -54,11 +57,22 @@ export function NameCard({ candidate }: NameCardProps) {
 
       <div className={styles.metaRow}>
         <div className={styles.metrics}>
-          <div className={styles.metric}>
+          <div className={metricClassName} aria-hidden={!shouldShowPrice}>
             <span className={styles.metricLabel}>Price</span>
             <span className={styles.metricValue}>
-              {priceDisplay}
-              {priceUsdDisplay && <span className={styles.metricMeta}>≈ ${priceUsdDisplay}</span>}
+              {shouldShowPrice ? (
+                <>
+                  {priceDisplay}
+                  {priceUsdDisplay && (
+                    <span className={styles.metricMeta}>≈ ${priceUsdDisplay}</span>
+                  )}
+                </>
+              ) : (
+                <>
+                  0
+                  <span className={styles.metricMeta}>≈ $0.00</span>
+                </>
+              )}
             </span>
           </div>
         </div>

@@ -17,7 +17,7 @@ export function useCandidates(
   const [allItems, setAllItems] = useState<BasenameCandidate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [shuffleToken, setShuffleToken] = useState(() => Date.now());
+  const [shuffleToken, setShuffleToken] = useState(() => createShuffleToken());
   const setApiLatency = useUIStore((state) => state.setApiLatency);
   const { lengths, anyLength, kinds } = filters;
   const previousFiltersRef = useRef({ lengths, anyLength, kinds });
@@ -63,7 +63,7 @@ export function useCandidates(
     const kindsChanged = prev.kinds !== kinds;
     if (lengthChanged || kindsChanged) {
       previousFiltersRef.current = { lengths, anyLength, kinds };
-      setShuffleToken(Date.now());
+      setShuffleToken(createShuffleToken());
     }
   }, [lengths, anyLength, kinds]);
 
@@ -104,7 +104,7 @@ export function useCandidates(
     isLoading: loading,
     error,
     refresh: () => {
-      setShuffleToken(Date.now());
+      setShuffleToken(createShuffleToken());
     },
   };
 }
@@ -119,4 +119,16 @@ function shuffleWithSeed<T>(items: T[], seed: number): T[] {
     [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
   }
   return result;
+}
+
+function createShuffleToken(): number {
+  if (typeof globalThis !== "undefined") {
+    const cryptoObj = (globalThis as typeof globalThis & { crypto?: Crypto }).crypto;
+    if (cryptoObj && "getRandomValues" in cryptoObj) {
+      const array = new Uint32Array(1);
+      cryptoObj.getRandomValues(array);
+      return array[0] || Math.floor(Math.random() * 1_000_000_000);
+    }
+  }
+  return Math.floor(Math.random() * 1_000_000_000) + Date.now();
 }
