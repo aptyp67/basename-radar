@@ -1,5 +1,5 @@
 # Netlify configuration for Basename Radar
-# Proxy Farcaster Hosted Manifest to /.well-known/farcaster.json
+# Redirect Farcaster Hosted Manifest to /.well-known/farcaster.json
 
 [build]
   command = "yarn build"
@@ -8,6 +8,13 @@
 [[redirects]]
   from = "/.well-known/farcaster.json"
   to = "https://api.farcaster.xyz/miniapps/hosted-manifest/0199a9bf-53c1-271c-8374-71bad03d091b"
+  status = 307
+  force = true
+
+# Make iconUrl in Hosted Manifest valid without changing the hosted config
+[[redirects]]
+  from = "/icon.png"
+  to = "/icons/app.png"
   status = 200
   force = true
 
