@@ -1,6 +1,19 @@
 {
-  "name": "Basename Radar",
-  "url": "https://your-domain.xyz/?farcaster=1",
-  "icon_url": "https://your-domain.xyz/icons/app.png",
-  "description": "Find short/meaningful basenames on Base."
+  "accountAssociation": {
+    "header": "",
+    "payload": "",
+    "signature": ""
+  },
+  "miniapp": {
+    "version": "1",
+    "name": "Basename Radar",
+    "homeUrl": "https://basename-radar.netlify.app/?farcaster=1",
+    "iconUrl": "https://basename-radar.netlify.app/icons/app.png",
+    "splashImageUrl": "https://basename-radar.netlify.app/icons/app.png",
+    "splashBackgroundColor": "#0A0A0A",
+    "primaryCategory": "developer-tools",
+    "tags": ["base", "names"],
+    "description": "Find short/meaningful basenames on Base.",
+    "noindex": true
+  }
 }

@@ -8,6 +8,8 @@ import { Button } from "./components/ui/Button";
 import { useWalletStore } from "./store/wallet.store";
 import { useFarcasterView } from "./hooks/useFarcasterView";
 import styles from "./App.module.css";
+// Import Farcaster Mini App SDK
+import { sdk } from "@farcaster/miniapp-sdk";
 
 function Layout() {
   const isFarcasterView = useFarcasterView();
@@ -22,6 +24,26 @@ function Layout() {
   useEffect(() => {
     void initializeWallet();
   }, [initializeWallet]);
+
+  // Notify Farcaster that UI is ready when rendered inside Farcaster
+  useEffect(() => {
+    if (!isFarcasterView) return;
+    let cancelled = false;
+    const markReady = async () => {
+      try {
+        await sdk.actions.ready();
+      } catch {
+        // no-op: calling outside Farcaster or before handshake safely fails
+      }
+    };
+    // Use microtask to ensure initial paint happened
+    Promise.resolve().then(() => {
+      if (!cancelled) void markReady();
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isFarcasterView]);
 
   const handleWalletClick = () => {
     if (isConnected) {
