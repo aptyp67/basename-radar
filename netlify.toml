@@ -1,0 +1,18 @@
+# Netlify configuration for Basename Radar
+# Proxy Farcaster Hosted Manifest to /.well-known/farcaster.json
+
+[build]
+  command = "yarn build"
+  publish = "dist"
+
+[[redirects]]
+  from = "/.well-known/farcaster.json"
+  to = "https://api.farcaster.xyz/miniapps/hosted-manifest/0199a9bf-53c1-271c-8374-71bad03d091b"
+  status = 200
+  force = true
+
+# SPA fallback for Vite app
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
