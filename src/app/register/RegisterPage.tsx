@@ -159,7 +159,14 @@ export function RegisterPage() {
       <div className={styles.pageBackdrop} aria-hidden="true" />
       <div className={styles.container}>
         <nav className={styles.breadcrumb} aria-label="Breadcrumb">
-          <Link to="/">Basename Radar</Link>
+          <Link
+            to={{
+              pathname: "/",
+              search: location.search,
+            }}
+          >
+            Basename Radar
+          </Link>
           <span className={styles.breadcrumbSeparator}>/</span>
           <span className={styles.breadcrumbCurrent}>{breadcrumbName}</span>
         </nav>

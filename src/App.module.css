@@ -90,6 +90,14 @@
   flex: 1 1 auto;
 }
 
+.shellCompact {
+  background: rgba(9, 11, 17, 0.92);
+}
+
+.mainCompact {
+  padding-top: 0;
+}
+
 .footer {
   padding: 1rem 1.5rem;
   border-top: 1px solid rgba(255, 255, 255, 0.05);

@@ -1,6 +1,6 @@
 import { Button } from "../ui/Button";
 import { useUIStore } from "../../store/ui.store";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import type { Availability, NameKind } from "../../types/basename";
 
 interface RegisterButtonProps {
@@ -26,18 +26,25 @@ export function RegisterButton({
 }: RegisterButtonProps) {
   const trackEvent = useUIStore((state) => state.trackEvent);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleClick = () => {
     trackEvent("registerClicks");
-    navigate(`/register/${encodeURIComponent(name)}`, {
-      state: {
-        priceWei,
-        availability,
-        reasons,
-        kinds,
-        length,
+    navigate(
+      {
+        pathname: `/register/${encodeURIComponent(name)}`,
+        search: location.search,
       },
-    });
+      {
+        state: {
+          priceWei,
+          availability,
+          reasons,
+          kinds,
+          length,
+        },
+      }
+    );
   };
 
   return <Button type="button" onClick={handleClick} disabled={disabled} fullWidth={fullWidth}>Register</Button>;

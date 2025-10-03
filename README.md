@@ -10,7 +10,7 @@ later without rewriting components.
 - Length (3–6), kind (short / word / pattern), and score/price/alphabetical sorting controls
 - Live name search with validation and mocked availability + price checks (cached client-side)
 - Register (opens mocked checkout link) and Watch (toast success) actions with tracking metrics
-- Full web UX at `/` plus Farcaster-friendly compact UI at `/mini` (linked externally for Farcaster app)
+- Responsive web UX at `/` that doubles as the Farcaster mini-app entry point
 - Prepared hydration for wagmi, viem, and OnchainKit configs + Solidity stubs for upcoming contracts
 
 ## Getting started
@@ -48,7 +48,6 @@ Set `VITE_BASENAME_NETWORK` to `sepolia` when developing against Sepolia. You ca
 /src
   /app
     /home/HomePage.tsx           # Full web interface
-    /mini/MiniPage.tsx           # Compact Farcaster-ready UI
   /components
     /ui                          # Shared primitives (Button, Input, etc.)
     /basename                    # Domain-specific UI modules
@@ -76,7 +75,7 @@ The heuristics replicate the scoring scheme from the product spec, including bon
 
 ## Farcaster mini app
 
-- `/mini` renders the same data with tighter spacing and capped page size for quick load inside Frames
+- `/?farcaster=1` loads the same experience with compact defaults tuned for Farcaster Frames
 - Manifest is served at `/.well-known/farcaster.json`
 - CSP avoids blocking embeds (`frame-ancestors *`)
 
@@ -86,4 +85,4 @@ The heuristics replicate the scoring scheme from the product spec, including bon
 2. Wire `WatchButton` to `Watchlist.sol` events and persist user-owned watchlists
 3. Implement `RegisterWithFee.sol` flow with wagmi `writeContract` + checkout UI
 4. Harden analytics (Farcaster engagements, CTR, latency budgets)
-5. Polish `/mini` for Farcaster Developer Rewards submission and deploy verified contracts
+5. Polish the Farcaster presentation (`/?farcaster=1`) for Developer Rewards submission and deploy verified contracts

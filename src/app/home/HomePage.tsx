@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { NameSearch } from "../../components/basename/NameSearch";
 import { FiltersBar } from "../../components/basename/FiltersBar";
@@ -5,12 +6,17 @@ import { CandidatesList } from "../../components/basename/CandidatesList";
 import { useFiltersStore } from "../../store/filters.store";
 import { useCandidates } from "../../hooks/useCandidates";
 import { Pagination } from "../../components/ui/Pagination";
+import { useFarcasterView } from "../../hooks/useFarcasterView";
 import styles from "./HomePage.module.css";
 
-const ITEMS_PER_PAGE = 12;
+const DEFAULT_ITEMS_PER_PAGE = 12;
+const DEFAULT_FETCH_SIZE = 48;
+const FARCASTER_ITEMS_PER_PAGE = 18;
+const FARCASTER_FETCH_SIZE = 18;
 const LIST_SCROLL_OFFSET_PX = 24;
 
 export function HomePage() {
+  const isFarcasterView = useFarcasterView();
   const lengths = useFiltersStore((state) => state.lengths);
   const anyLength = useFiltersStore((state) => state.anyLength);
   const kinds = useFiltersStore((state) => state.kinds);
@@ -28,7 +34,8 @@ export function HomePage() {
     isLoading,
     error,
     refresh,
-  } = useCandidates(filters, 48);
+  } = useCandidates(filters, isFarcasterView ? FARCASTER_FETCH_SIZE : DEFAULT_FETCH_SIZE);
+  const itemsPerPage = isFarcasterView ? FARCASTER_ITEMS_PER_PAGE : DEFAULT_ITEMS_PER_PAGE;
 
   const scrollToListTop = useCallback(() => {
     const target = listContainerRef.current;
@@ -65,7 +72,14 @@ export function HomePage() {
   }, [lengths, anyLength, kinds, scrollToListTop]);
 
   useEffect(() => {
-    const pages = Math.ceil(candidates.length / ITEMS_PER_PAGE);
+    if (!isFarcasterView) {
+      return;
+    }
+    setPage(1);
+  }, [isFarcasterView]);
+
+  useEffect(() => {
+    const pages = Math.ceil(candidates.length / itemsPerPage);
     if (pages === 0) {
       if (page !== 1) {
         setPage(1);
@@ -78,16 +92,19 @@ export function HomePage() {
         scrollToListTop();
       }
     }
-  }, [candidates.length, page, scrollToListTop]);
+  }, [candidates.length, itemsPerPage, page, scrollToListTop]);
 
-  const totalPages = Math.ceil(candidates.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(candidates.length / itemsPerPage);
   const currentPage = totalPages === 0 ? 1 : Math.min(page, totalPages);
   const paginatedItems = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return candidates.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [candidates, currentPage]);
+    if (isFarcasterView) {
+      return candidates;
+    }
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return candidates.slice(startIndex, startIndex + itemsPerPage);
+  }, [candidates, currentPage, isFarcasterView, itemsPerPage]);
 
-  const shouldShowPagination = !isLoading && !error && totalPages > 1;
+  const shouldShowPagination = !isFarcasterView && !isLoading && !error && totalPages > 1;
 
   const handlePageChange = (nextPage: number) => {
     setPage(nextPage);
@@ -101,8 +118,8 @@ export function HomePage() {
   }, [refresh, scrollToListTop]);
 
   return (
-    <main className={styles.page}>
-      <section className={styles.hero}>
+    <main className={clsx(styles.page, isFarcasterView && styles.pageCompact)}>
+      <section className={clsx(styles.hero, isFarcasterView && styles.heroCompact)}>
         <h1 className={styles.title}>Basename Radar</h1>
         <p className={styles.subtitle}>
           Discover short and meaningful names ready for Base. Explore curated
@@ -110,13 +127,13 @@ export function HomePage() {
         </p>
       </section>
 
-      <NameSearch autoFocus />
+      <NameSearch autoFocus={!isFarcasterView} />
 
-      <section className={styles.layout}>
-        <aside className={styles.sidebar}>
+      <section className={clsx(styles.layout, isFarcasterView && styles.layoutCompact)}>
+        <aside className={clsx(styles.sidebar, isFarcasterView && styles.sidebarCompact)}>
           <FiltersBar onShuffle={handleShuffle} />
         </aside>
-        <div className={styles.content}>
+        <div className={clsx(styles.content, isFarcasterView && styles.contentCompact)}>
           <div ref={listContainerRef}>
             <CandidatesList
               items={paginatedItems}

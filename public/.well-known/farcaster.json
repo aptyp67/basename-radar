@@ -1,6 +1,6 @@
 {
   "name": "Basename Radar",
-  "url": "https://your-domain.xyz/mini",
+  "url": "https://your-domain.xyz/?farcaster=1",
   "icon_url": "https://your-domain.xyz/icons/app.png",
   "description": "Find short/meaningful basenames on Base."
 }

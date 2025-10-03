@@ -7,7 +7,7 @@ import { availabilityCopy, formatUsd, formatWei } from "../../lib/format";
 import { useNameCheck } from "../../hooks/useNameCheck";
 import { useUIStore } from "../../store/ui.store";
 import styles from "./NameSearch.module.css";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { getEthBaseLabelError } from "../../lib/validation";
 
 interface NameSearchProps {
@@ -22,6 +22,7 @@ export function NameSearch({ autoFocus }: NameSearchProps) {
     useNameCheck();
   const addToast = useUIStore((state) => state.addToast);
   const navigate = useNavigate();
+  const location = useLocation();
   const lastInvalidNoticeRef = useRef(0);
 
   const describeValidationError = (code: ReturnType<typeof getEthBaseLabelError>) => {
@@ -99,12 +100,18 @@ export function NameSearch({ autoFocus }: NameSearchProps) {
     if (!lastName) {
       return;
     }
-    navigate(`/register/${encodeURIComponent(lastName)}`, {
-      state: {
-        priceWei,
-        availability,
+    navigate(
+      {
+        pathname: `/register/${encodeURIComponent(lastName)}`,
+        search: location.search,
       },
-    });
+      {
+        state: {
+          priceWei,
+          availability,
+        },
+      }
+    );
   };
 
   return (
